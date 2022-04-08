@@ -1,3 +1,4 @@
+from base import BaseSpider
 from urllib import request, parse
 import traceback
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ movie_from_re = re.compile(r'<p class="">(.*?)</p>', re.S)
 # Comment
 # ===============================
 @dataclass
-class MovieData(object):
+class MovieData(BaseSpider):
     movie_link:str = ''             # 详情链接
     image_link:str = ''             # 封面
     movie_name:str = ''             # 影片名

@@ -1,14 +1,11 @@
+from base import BaseSpider
 from urllib import request, parse
 import traceback
 from bs4 import BeautifulSoup
 import re
 from dataclasses import dataclass
-from DingTalk import DingTalkEngine
+from ding_talk import DingTalkEngine
 from time import sleep
-
-# 解决ssl错误
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 
 nft_link_re = re.compile(r'<a class="last-souvenirs-card-wrapper" href="(.*?)">')
 image_link_re = re.compile(r'<img alt=.*src="(.*?)"/>')
@@ -18,7 +15,7 @@ nft_name_re = re.compile(r'<span class="text-wrapper text">(.*?)</span>')
 dingtalk = DingTalkEngine()
 
 @dataclass
-class ExpoNFT(object):
+class ExpoNFT(BaseSpider):
     nft_link:str = ''               # 详情链接
     image_link:str = ''             # 封面
     nft_name:str = ''               # 名称
