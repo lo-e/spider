@@ -33,7 +33,6 @@ def expo():
         baseUrl = 'https://expo.chikoroko.art'
         html = askUrl(url=baseUrl, parms=None, timeout=60)
 
-        print(html)
         # 解析
         if html:
             soup = BeautifulSoup(html, 'html.parser')
