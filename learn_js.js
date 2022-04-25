@@ -22,19 +22,27 @@
         console.log(ev.srcElement)
         console.log('横坐标：'+clientX)
         console.log('纵坐标：'+clientY)
+
+        var w = document.documentElement.clientWidth || document.body.clientWidth
+        var h = document.documentElement.clientHeight || document.body.clientHeight
+        console.log('windowX：'+w, 'windowY：'+h)
+
         console.log('\n')
     })
 
-
-    let chongqing_pos = new DOMPoint(313, 531);
-    let jiangxi_pos = new DOMPoint(430, 557)
     let interval = setInterval(function (){
-        let map_list = $('.BMap_mask')
-        if(map_list.length){
-            clearInterval(interval)
-            let map = map_list[0]
-            move_mouse(map, false, chongqing_pos, jiangxi_pos)
-        }
+        $('input').each(function (index, element) {
+            let id = $(element).attr('id')
+            let name = $(element).attr('name')
+            if(id=='inp-query' & name=='search_text'){
+                clearInterval(interval)
+                console.log(element)
+                let rect =  element.getBoundingClientRect()
+                let x = rect.x
+                let y = rect.y
+                console.log('坐标：',x, y)
+            }
+        })
     }, 2000)
 
     console.log('end!')
@@ -282,6 +290,13 @@ document.elementFromPoint(236, 251).click()
 mousedown.initMouseEvent("click",true,true,document.defaultView,0,
             x, y, x, y,false,false,false,false,0,null);
 to_click.dispatchEvent(mousedown);
+
+// 获取窗口大小
+document.documentElement.clientWidth        // 不包含滚动条的宽度
+document.documentElement.clientHeight       // 不包含滚动条的高度
+
+document.body.clientWidth                   // 不包含滚动条的完整页面宽度
+document.body.clientHeight                  // 不包含滚动条的完整页面高度
 
 // 获取元素坐标
 let rect =  sel.getBoundingClientRect()
