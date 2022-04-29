@@ -287,6 +287,7 @@ document.addEventListener("mouseup", function (ev){
 // 方案一
 document.elementFromPoint(236, 251).click()
 // 方案二【推荐】
+var mousedown = document.createEvent("MouseEvents");
 mousedown.initMouseEvent("click",true,true,document.defaultView,0,
             x, y, x, y,false,false,false,false,0,null);
 to_click.dispatchEvent(mousedown);
