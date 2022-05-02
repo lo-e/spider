@@ -469,3 +469,10 @@ function search_locked_farms_rect() {
     }
     return locked_area
 }
+
+// 随机的时间【level 1, 10, 100, 1000, 10000, 100000 秒】
+function random_interval(level) {
+    let base = Math.random()
+    let result = Math.max(Math.ceil(base * 1000 * level), Math.ceil(level*1000/10))
+    return result
+}
