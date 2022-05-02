@@ -56,6 +56,7 @@
                 }
             }
         }
+        // fake
         console.log('已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length)
 
         // 待成熟作物洞口
@@ -75,6 +76,7 @@
                 }
             }
         }
+        // fake
         console.log('待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length)
 
         // 未种植洞口
@@ -94,6 +96,7 @@
                 }
             }
         }
+        // fake
         console.log('未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length)
 
         if (available_crops_ready.length || available_crops_none.length) {
@@ -436,6 +439,7 @@ function search_locked_farms_rect() {
             }
         }
     })
+    // fake
     console.log('\n未解锁土地数量：', locked_rects.length)
     var left = 0
     var right = 0
