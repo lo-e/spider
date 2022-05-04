@@ -12,10 +12,41 @@
 (function() {
     console.log('start！')
     var realtime_pos = new DOMPoint(0, 0)
+    var manual_stoping = false
     var is_draging = false
+    var is_farming = false
+    var box_collecting = false
+    var box_clicking = false
 
     // 监听点击
-    listen_click()
+    document.addEventListener("click", function (ev){
+        var oev = ev || event
+        let clientX = oev.clientX
+        let clientY = oev.clientY
+
+        let element = ev.srcElement
+        let element_text = $(element).text()
+        if(element_text){
+            if(element_text == 'Menu'){
+                // 结束种植
+                manual_stoping = !manual_stoping
+                // fake
+                console.log('****** click text:', element_text, '******')
+                if (manual_stoping) {
+                    console.log('****** 手动停止种植 ******')
+                }else {
+                    console.log('****** 手动启动种植 ******')
+                }
+            }
+        }
+
+        // console.log('\n')
+        // console.log('click!')
+        // console.log(element)
+        // console.log('横坐标：'+clientX)
+        // console.log('纵坐标：'+clientY)
+        // console.log('\n')
+    })
 
     // 记录实时鼠标位置
     document.addEventListener("mousemove", function (ev){
@@ -25,115 +56,201 @@
         realtime_pos = new DOMPoint(clientX, clientY)
     });
 
+    // 检测页面出错，刷新页面
+    setInterval(function () {
+        let wrong_status = search_something_wrong()
+        if(wrong_status) {
+            // fake
+            console.log('****** 页面出错，刷新！ ******')
+            location.reload()
+        }
+    }, random_interval(3, 5))
+
+    // 点击Let's farm!
+    setInterval(function () {
+        let farm_button = search_letsfarm()
+        if(farm_button) {
+            click_element(farm_button, false)
+        }
+    }, random_interval(2, 3))
+
     // 种植农作物
-    var interval_crops = setInterval(()=>{
-        let search_results = search_crops()
-        let crops_ready = search_results[0]
-        let crops_preparing = search_results[1]
-        let crops_none = search_results[2]
+    var interval_farming = setInterval(()=>{
+        if (!manual_stoping) {
+            let search_results = search_crops()
+            let crops_ready = search_results[0]
+            let crops_preparing = search_results[1]
+            let crops_none = search_results[2]
 
-        var available_crops_ready = []
-        var available_crops_preparing = []
-        var available_crops_none = []
+            var available_crops_ready = []
+            var available_crops_preparing = []
+            var available_crops_none = []
 
-        // 未解锁土地范围
-        let locked_area = search_locked_farms_rect()
+            // 未解锁土地范围
+            let locked_area = search_locked_farms_rect()
 
-        // 已成熟作物洞口
-        if(crops_ready.length){
-            for(var index in crops_ready){
-                let element = crops_ready[index]
-                let rect =  element.getBoundingClientRect()
-                var is_locked = false
-                if(locked_area){
-                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                        // 该洞口未解锁
-                        is_locked = true
-                    }
-                }
-                if(!is_locked) {
-                    available_crops_ready.push(element)
-                }
-            }
-        }
-        // fake
-        console.log('已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length)
-
-        // 待成熟作物洞口
-        if(crops_preparing.length){
-            for(index in crops_preparing){
-                let element = crops_preparing[index]
-                let rect =  element.getBoundingClientRect()
-                is_locked = false
-                if(locked_area){
-                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                        // 该洞口未解锁
-                        is_locked = true
-                    }
-                }
-                if(!is_locked) {
-                    available_crops_preparing.push(element)
-                }
-            }
-        }
-        // fake
-        console.log('待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length)
-
-        // 未种植洞口
-        if(crops_none.length){
-            for(index in crops_none){
-                let element = crops_none[index]
-                let rect =  element.getBoundingClientRect()
-                is_locked = false
-                if(locked_area){
-                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                        // 该洞口未解锁
-                        is_locked = true
-                    }
-                }
-                if(!is_locked) {
-                    available_crops_none.push(element)
-                }
-            }
-        }
-        // fake
-        console.log('未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length)
-
-        if (available_crops_ready.length || available_crops_none.length) {
-            // 调整农场位置
-            let total_crops = available_crops_ready.concat(available_crops_none)
-            if(!is_draging) {
-                is_draging = true
-                let drag_interval = setInterval(function () {
-                    var direction_x = 0
-                    var direction_y = 0
-                    for (var i in total_crops) {
-                        let crop = total_crops[i]
-                        let crop_rect = crop.getBoundingClientRect()
-                        let direction = drag_direction(crop_rect)
-                        let dir_x = direction[0]
-                        let dir_y = direction[1]
-                        if (dir_x != 0) {
-                            direction_x = dir_x
-                        }
-                        if (dir_y != 0) {
-                            direction_y = dir_y
+            // 已成熟作物洞口
+            if(crops_ready.length){
+                for(var index in crops_ready){
+                    let element = crops_ready[index]
+                    let rect =  element.getBoundingClientRect()
+                    var is_locked = false
+                    if(locked_area){
+                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                            // 该洞口未解锁
+                            is_locked = true
                         }
                     }
-                    if (direction_x || direction_y) {
-                        drag_to_farming(direction_x, direction_y)
-                    }else {
-                        is_draging = false
-                        // fake
-                        console.log('stop draging!')
-                        clearInterval(drag_interval)
+                    if(!is_locked) {
+                        available_crops_ready.push(element)
                     }
-                }, 1000)
+                }
+            }
+            // fake
+            // console.log('已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length)
+
+            // 待成熟作物洞口
+            if(crops_preparing.length){
+                for(index in crops_preparing){
+                    let element = crops_preparing[index]
+                    let rect =  element.getBoundingClientRect()
+                    is_locked = false
+                    if(locked_area){
+                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                            // 该洞口未解锁
+                            is_locked = true
+                        }
+                    }
+                    if(!is_locked) {
+                        available_crops_preparing.push(element)
+                    }
+                }
+            }
+            // fake
+            // console.log('待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length)
+
+            // 未种植洞口
+            if(crops_none.length){
+                for(index in crops_none){
+                    let element = crops_none[index]
+                    let rect =  element.getBoundingClientRect()
+                    is_locked = false
+                    if(locked_area){
+                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                            // 该洞口未解锁
+                            is_locked = true
+                        }
+                    }
+                    if(!is_locked) {
+                        available_crops_none.push(element)
+                    }
+                }
+            }
+            // fake
+            // console.log('未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length)
+
+            // 搜寻宝箱
+            let box_result = search_box()
+            let droped = box_result[0]
+            let box = box_result[1]
+            if (droped) {
+                // fake
+                console.log('****** 宝箱掉落 ******')
+
+                box_collecting = true
+                if (box && !box_clicking) {
+                    // 点击宝箱
+                    // fake
+                    console.log('****** 点击宝箱 ******')
+
+                    box_clicking = true
+                    setTimeout(function () {
+                        click_element(box, false)
+                    }, random_interval(0, 1))
+                }
+
+                $('button').each(function (index_button, element_button) {
+                    let button_text = $(element_button).text()
+                    if(button_text){
+                        let re = RegExp('Close')
+                        if(button_text.match(re)){
+                            // fake
+                            console.log('****** 点击Close ******')
+
+                            click_element(element_button, false)
+                            return false
+                        }
+                    }
+                })
+            }else {
+                box_collecting = false
+                box_clicking = false
+            }
+
+            // fake
+            if ((available_crops_ready.length || available_crops_none.length) && !box_collecting) {
+                // 调整农场位置
+                if(!is_draging & !is_farming) {
+                    is_draging = true
+
+                    let total_crops = available_crops_ready.concat(available_crops_none)
+                    let drag_interval = setInterval(function () {
+                        var direction_x = 0
+                        var direction_y = 0
+                        for (var i in total_crops) {
+                            let crop = total_crops[i]
+                            let crop_rect = crop.getBoundingClientRect()
+                            let direction = drag_direction(crop_rect)
+                            let dir_x = direction[0]
+                            let dir_y = direction[1]
+                            if (dir_x != 0) {
+                                direction_x = dir_x
+                            }
+                            if (dir_y != 0) {
+                                direction_y = dir_y
+                            }
+                        }
+                        if (direction_x || direction_y) {
+                            drag_to_farming(direction_x, direction_y)
+                        }else {
+                            // 收菜、种植
+                            var is_ready = false
+                            var crop = null
+                            if(available_crops_ready.length) {
+                                is_ready = true
+                                crop = available_crops_ready[0]
+                            }else if(available_crops_none.length) {
+                                crop = available_crops_none[0]
+                            }
+                            if(crop) {
+                                is_farming = true
+                                if (is_ready) {
+                                    console.log('****** 大丰收 ******')
+                                }else {
+                                    console.log('****** 种植 ******')
+                                }
+                                setTimeout(function () {
+                                    let click_rect = crop.getBoundingClientRect()
+                                    let click_position = new DOMPoint(click_rect.x+click_rect.width*Math.random()*0.9, click_rect.y+click_rect.height*Math.random()*0.9)
+                                    move_mouse(null, false, realtime_pos, click_position)
+                                    setTimeout(function () {
+                                        click_element(crop, is_ready)
+                                        is_farming = false
+                                    }, 600)
+                                }, random_interval(0, 2))
+                            }
+
+                            is_draging = false
+                            clearInterval(drag_interval)
+                        }
+                    }, 600)
+                }
             }
         }
-    }, 2000)
+    }, 500)
 })()
 
+// ================ 工具 =====================
 // 根据元素坐标获取拖动方向，使元素处于合适的位置
 function drag_direction(element_rect) {
     let client_width = document.documentElement.clientWidth        // 浏览器窗口不包含滚动条的宽度
@@ -153,29 +270,12 @@ function drag_direction(element_rect) {
         // 需要向下拖动
         direction_y = 1
     }
-    if (element_rect.y+element_rect.height >= client_height-20) {
+    if (element_rect.y+element_rect.height >= client_height-60) {
         // 需要向上拖动
         direction_y = -1
     }
     return [direction_x, direction_y]
 }
-
-// 监听点击事件
-function listen_click() {
-    document.addEventListener("click", function (ev){
-        var oev = ev || event
-        let clientX = oev.clientX
-        let clientY = oev.clientY
-
-        console.log('\n')
-        console.log('click!')
-        console.log(ev.srcElement)
-        console.log('横坐标：'+clientX)
-        console.log('纵坐标：'+clientY)
-        console.log('\n')
-    })
-}
-
 // 随机拖动农场
 function drag_to_farming(direction_x, direction_y) {
     let client_width = document.documentElement.clientWidth
@@ -208,7 +308,7 @@ function drag_to_farming(direction_x, direction_y) {
     let end_point = new DOMPoint(end_x, end_y)
 
     // fake
-    console.log('draging', direction_x, direction_y)
+    console.log('draging:', direction_x, direction_y)
     move_mouse(null, true, start_point, end_point)
 }
 
@@ -256,7 +356,7 @@ function move_mouse(target, drag, from_point, to_point){
         y_direction = -1
     }
     // 移动速度控制【0 < speed < 1】
-    let speed = 0.2
+    let speed = 0.8
     var interval = setInterval(function(){
         if(x_direction > 0){
             // 向右移动
@@ -309,6 +409,18 @@ function move_mouse(target, drag, from_point, to_point){
     }, 30);
 }
 
+// 随机的时间【秒】
+function random_interval(min, max) {
+    var result = 0
+    while(result <= 1000 * min) {
+        result = Math.ceil(Math.random() * 1000 * max)
+    }
+    // fake
+    // console.log('随机时间：', result/1000, '秒')
+    return result
+}
+
+// ================ 农场 =====================
 // 搜寻待成熟进度条
 function search_progress_bar() {
     var target_list = []
@@ -440,7 +552,7 @@ function search_locked_farms_rect() {
         }
     })
     // fake
-    console.log('\n未解锁土地数量：', locked_rects.length)
+    // console.log('\n未解锁土地数量：', locked_rects.length)
     var left = 0
     var right = 0
     var top = 0
@@ -470,9 +582,82 @@ function search_locked_farms_rect() {
     return locked_area
 }
 
-// 随机的时间【level 1, 10, 100, 1000, 10000, 100000 秒】
-function random_interval(level) {
-    let base = Math.random()
-    let result = Math.max(Math.ceil(base * 1000 * level), Math.ceil(level*1000/10))
-    return result
+// 搜寻宝箱
+function search_box() {
+    var droped = false
+    var box = null
+    $('.text-center.mb-2').each(function (index, element) {
+        let text = $(element).text()
+        if(text){
+            let re = RegExp('You found a reward')
+            if(text.match(re)){
+                droped = true
+                return false
+            }
+        }
+    })
+
+    if (droped) {
+        // 确定宝箱位置
+        $('img').each(function (index, element) {
+            let class_name = $(element).attr('class')
+            if(class_name){
+                let re = RegExp('w-16 hover:img-highlight cursor-pointer')
+                if(class_name.match(re)){
+                    box = element
+                    return false
+                }
+            }
+        })
+    }
+
+    return [droped, box]
+}
+
+// 点击元素
+function click_element(element, double_click) {
+    let click_rect = element.getBoundingClientRect()
+    let click_position = new DOMPoint(click_rect.x+click_rect.width*Math.random()*0.9, click_rect.y+click_rect.height*Math.random()*0.9)
+    var mousedown = document.createEvent("MouseEvents");
+    mousedown.initMouseEvent("click",true,true,document.defaultView,0,
+                click_position.x, click_position.y, click_position.x, click_position.y,false,false,false,false,0,null)
+    element.dispatchEvent(mousedown)
+    if(double_click) {
+        // 双击
+        setTimeout(function () {
+            element.dispatchEvent(mousedown)
+        }, random_interval(0.1, 0.2))
+    }
+}
+
+// 搜寻Let's farm!
+function search_letsfarm() {
+    var farm_button = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if(text){
+            let re = RegExp('Let\'s farm!')
+            if(text.match(re)){
+                farm_button = element
+                return false
+            }
+        }
+    })
+    return farm_button
+}
+
+// 搜寻Something went wrong!
+function search_something_wrong() {
+    var wrong_status = false
+    $('.text-center').each(function (index, element) {
+        let text = $(element).text()
+        if(text){
+            let re = RegExp('Something went wrong!')
+            if(text.match(re)){
+                wrong_status = true
+                return false
+            }
+        }
+    })
+    return wrong_status
 }
