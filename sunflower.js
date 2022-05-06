@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 (function() {
-    console.log('start！')
+    custom_log(['start！'])
     var realtime_pos = new DOMPoint(0, 0)
     var manual_stoping = false
     var is_draging = false
@@ -35,22 +35,22 @@
                 // 结束种植
                 manual_stoping = !manual_stoping
                 // fake
-                console.log('****** click text:', element_text, '******')
+                custom_log(['****** click text:', element_text, '******'])
                 if (manual_stoping) {
-                    console.log('****** 手动停止种植 ******')
+                    custom_log(['****** 手动停止种植 ******'])
                 }else {
                     seed_processing = false
-                    console.log('****** 手动启动种植 ******')
+                    custom_log(['****** 手动启动种植 ******'])
                 }
             }
         }
 
-        // console.log('\n')
-        // console.log('click!')
+        // custom_log(['\n'])
+        // custom_log(['click!'])
         // console.log(element)
-        // console.log('横坐标：'+clientX)
-        // console.log('纵坐标：'+clientY)
-        // console.log('\n')
+        // custom_log(['横坐标：'+clientX])
+        // custom_log(['纵坐标：'+clientY])
+        // custom_log(['\n'])
     })
 
     // 记录实时鼠标位置
@@ -68,7 +68,7 @@
         if(wrong_status) {
             if (reload_waiting == 0) {
                 // fake
-                console.log('****** 页面出错，刷新！ ******')
+                custom_log(['****** 页面出错，刷新！ ******'])
                 location.reload()
             }
 
@@ -90,10 +90,10 @@
                 farm_loading = loading
                 if (loading) {
                     // fake
-                    console.log('****** 加载中 ******')
+                    custom_log(['****** 加载中 ******'])
                 }else {
                     // fake
-                    console.log('****** 加载完成 ******')
+                    custom_log(['****** 加载完成 ******'])
                     clearInterval(interval_loading)
                 }
             }, random_interval(1, 2))
@@ -109,7 +109,7 @@
             seed_adding = seed_n
             if (seed_adding && !seed_processing) {
                 // fake
-                console.log('****** 种子不够了！ ******')
+                custom_log(['****** 种子不够了！ ******'])
 
                 // 切换种子
                 var bag = null
@@ -126,7 +126,7 @@
                     seed_processing = true
                     setTimeout(function () {
                         // fake
-                        console.log('****** 正在添加种子！ ******')
+                        custom_log(['****** 正在添加种子！ ******'])
 
                         click_element(bag)
                         setTimeout(function () {
@@ -184,7 +184,7 @@
                 }
             }
             // fake
-            // console.log('已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length)
+            // custom_log(['已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length])
 
             // 待成熟作物洞口
             if(crops_preparing.length){
@@ -204,7 +204,7 @@
                 }
             }
             // fake
-            // console.log('待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length)
+            // custom_log(['待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length])
 
             // 未种植洞口
             if(crops_none.length){
@@ -224,7 +224,7 @@
                 }
             }
             // fake
-            // console.log('未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length)
+            // custom_log(['未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length])
 
             // 搜寻宝箱
             let box_result = search_box()
@@ -232,13 +232,13 @@
             let box = box_result[1]
             if (droped) {
                 // fake
-                console.log('****** 宝箱掉落 ******')
+                custom_log(['****** 宝箱掉落 ******'])
 
                 box_collecting = true
                 if (box && !box_clicking) {
                     // 点击宝箱
                     // fake
-                    console.log('****** 点击宝箱 ******')
+                    custom_log(['****** 点击宝箱 ******'])
 
                     box_clicking = true
                     setTimeout(function () {
@@ -255,7 +255,7 @@
                                 box_close_clicking = true
                                 setTimeout(function () {
                                     // fake
-                                    console.log('****** 点击Close ******')
+                                    custom_log(['****** 点击Close ******'])
 
                                     click_element(element_button, false)
                                 }, random_interval(0.5, 1))
@@ -308,9 +308,9 @@
                             if(crop) {
                                 is_farming = true
                                 if (is_ready) {
-                                    console.log('****** 大丰收 ******')
+                                    custom_log(['****** 大丰收 ******'])
                                 }else {
-                                    console.log('****** 种植 ******')
+                                    custom_log(['****** 种植 ******'])
                                 }
                                 setTimeout(function () {
                                     let click_rect = crop.getBoundingClientRect()
@@ -391,7 +391,7 @@ function drag_to_farming(direction_x, direction_y) {
     let end_point = new DOMPoint(end_x, end_y)
 
     // fake
-    console.log('draging:', direction_x, direction_y)
+    custom_log(['draging:', direction_x, direction_y])
     move_mouse(null, true, start_point, end_point)
 }
 
@@ -499,8 +499,41 @@ function random_interval(min, max) {
         result = Math.ceil(Math.random() * 1000 * max)
     }
     // fake
-    // console.log('随机时间：', result/1000, '秒')
+    // custom_log(['随机时间：', result/1000, '秒'])
     return result
+}
+
+// 当前时间
+function full_time() {
+    let time_str = new Date(Date.now()).toLocaleString()
+    return time_str
+}
+
+function simple_time() {
+    let time = new Date(Date.now())
+    // let year = time.getFullYear()
+    // let month = time.getMonth() + 1
+    // let day = time.getDate()
+    let hour = time.getHours()
+    let minute = time.getMinutes()
+    let second = time.getSeconds()
+    let time_str = hour + ':' + minute + ':' + second
+    return time_str
+}
+
+// 自定义log
+function custom_log(content_list) {
+    var full_content = ''
+    for (var i in content_list) {
+        if (i == 0) {
+            full_content += simple_time() + '\t' + content_list[i]
+        }else {
+            full_content += ' ' + content_list[i]
+        }
+    }
+    if (full_content) {
+        console.log(full_content)
+    }
 }
 
 // ================ 农场 =====================
@@ -635,7 +668,7 @@ function search_locked_farms_rect() {
         }
     })
     // fake
-    // console.log('\n未解锁土地数量：', locked_rects.length)
+    // custom_log(['\n未解锁土地数量：', locked_rects.length])
     var left = 0
     var right = 0
     var top = 0
