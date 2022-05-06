@@ -17,6 +17,10 @@
     var is_farming = false
     var box_collecting = false
     var box_clicking = false
+    var box_close_clicking = false
+    var seed_adding = false
+    var seed_processing = false
+    var farm_loading = true
 
     // 监听点击
     document.addEventListener("click", function (ev){
@@ -35,6 +39,7 @@
                 if (manual_stoping) {
                     console.log('****** 手动停止种植 ******')
                 }else {
+                    seed_processing = false
                     console.log('****** 手动启动种植 ******')
                 }
             }
@@ -57,26 +62,98 @@
     });
 
     // 检测页面出错，刷新页面
+    var reload_waiting = 0
     setInterval(function () {
         let wrong_status = search_something_wrong()
         if(wrong_status) {
-            // fake
-            console.log('****** 页面出错，刷新！ ******')
-            location.reload()
+            if (reload_waiting == 0) {
+                // fake
+                console.log('****** 页面出错，刷新！ ******')
+                location.reload()
+            }
+
+            reload_waiting ++
+            if (reload_waiting >= 5) {
+                reload_waiting = 0
+            }
         }
     }, random_interval(3, 5))
 
     // 点击Let's farm!
-    setInterval(function () {
+    let interval_start = setInterval(function () {
         let farm_button = search_letsfarm()
         if(farm_button) {
             click_element(farm_button, false)
+            // 检查是否loading
+            let interval_loading = setInterval(function () {
+                let loading = is_loading()
+                farm_loading = loading
+                if (loading) {
+                    // fake
+                    console.log('****** 加载中 ******')
+                }else {
+                    // fake
+                    console.log('****** 加载完成 ******')
+                    clearInterval(interval_loading)
+                }
+            }, random_interval(1, 2))
+
+            clearInterval(interval_start)
         }
     }, random_interval(2, 3))
 
+    // 检查是否有种子
+    setInterval(function () {
+        if (!farm_loading) {
+            let seed_n = seed_needed()
+            seed_adding = seed_n
+            if (seed_adding && !seed_processing) {
+                // fake
+                console.log('****** 种子不够了！ ******')
+
+                // 切换种子
+                var bag = null
+                $('.w-8.mb-1').each(function (index, element) {
+                    let alt = $(element).attr('alt')
+                    if (alt == 'inventory') {
+                        // 找到了背包
+                        bag = element
+                        return false
+                    }
+                })
+
+                if (bag) {
+                    seed_processing = true
+                    setTimeout(function () {
+                        // fake
+                        console.log('****** 正在添加种子！ ******')
+
+                        click_element(bag)
+                        setTimeout(function () {
+                            // 搜索背包种子
+                            let seed_target = search_bag_seeds()
+                            if (seed_target) {
+                                // 选择种子
+                                click_element(seed_target)
+                                setTimeout(function () {
+                                    // 结束切换种子
+                                    let img_x = search_x()
+                                    if (img_x) {
+                                        click_element(img_x)
+                                        seed_processing = false
+                                    }
+                                }, random_interval(1, 2))
+                            }
+                        }, random_interval(1, 2))
+                    }, random_interval(2, 3))
+                }
+            }
+        }
+    }, 2000)
+
     // 种植农作物
     var interval_farming = setInterval(()=>{
-        if (!manual_stoping) {
+        if (!manual_stoping && !seed_adding) {
             let search_results = search_crops()
             let crops_ready = search_results[0]
             let crops_preparing = search_results[1]
@@ -166,7 +243,7 @@
                     box_clicking = true
                     setTimeout(function () {
                         click_element(box, false)
-                    }, random_interval(0, 1))
+                    }, random_interval(0.9, 3))
                 }
 
                 $('button').each(function (index_button, element_button) {
@@ -174,10 +251,15 @@
                     if(button_text){
                         let re = RegExp('Close')
                         if(button_text.match(re)){
-                            // fake
-                            console.log('****** 点击Close ******')
+                            if (!box_close_clicking) {
+                                box_close_clicking = true
+                                setTimeout(function () {
+                                    // fake
+                                    console.log('****** 点击Close ******')
 
-                            click_element(element_button, false)
+                                    click_element(element_button, false)
+                                }, random_interval(0.5, 1))
+                            }
                             return false
                         }
                     }
@@ -185,6 +267,7 @@
             }else {
                 box_collecting = false
                 box_clicking = false
+                box_close_clicking = false
             }
 
             // fake
@@ -652,12 +735,109 @@ function search_something_wrong() {
     $('.text-center').each(function (index, element) {
         let text = $(element).text()
         if(text){
-            let re = RegExp('Something went wrong!')
+            let re = RegExp('Something went wrong')
             if(text.match(re)){
                 wrong_status = true
                 return false
             }
         }
     })
+
+    if (!wrong_status) {
+        $('.text-center.mb-3').each(function (index, element) {
+            let text = $(element).text()
+            if(text){
+                let re_a = RegExp('Session expired')
+                if(text.match(re_a)){
+                    wrong_status = true
+                    return false
+                }
+
+                let re_b = RegExp('Too many requests')
+                if(text.match(re_b)){
+                    wrong_status = true
+                    return false
+                }
+            }
+        })
+    }
     return wrong_status
+}
+
+// 判断是否种子缺失
+function seed_needed() {
+    var seed_n = true
+    $('div').each(function (index, element) {
+        let class_name = $(element).attr('class')
+        if (class_name) {
+            let re = RegExp('flex flex-col items-center sm:mt-8')
+            if(class_name.match(re)){
+                let seed_list = $(element).find('.relative')
+                if (seed_list.length) {
+                    let first_seed = seed_list[0]
+                    let divs = $(first_seed).find('div div')
+                    $(divs).each(function (index, div) {
+                        let div_class_name = $(div).attr('class')
+                        if (div_class_name) {
+                            let div_re = RegExp('bg-silver-300 text-white text-shadow')
+                            if (div_class_name.match(div_re)) {
+                                // 种子充足
+                                seed_n = false
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    })
+    return seed_n
+}
+
+// 检查是否loading
+function is_loading() {
+    var loading = false
+    $('.text-shadow.loading').each(function (index, element) {
+        loading = true
+        return false
+    })
+    return loading
+}
+
+// 搜索背包种子
+function search_bag_seeds() {
+    var seed_target = null
+    $('.flex.flex-col.pl-2').each(function (index, element) {
+        var seed_bar = false
+        let p_list = $(element).find('p')
+        $(p_list).each(function (p_index, p) {
+            let p_text = $(p).text()
+            let p_re = RegExp('Seeds')
+            if(p_text.match(p_re)){
+                seed_bar = true
+                return false
+            }
+        })
+        if (seed_bar) {
+            var seed_list = $(element).find('div div')
+            if (seed_list.length) {
+                let first_seed = seed_list[0]
+                let seed_imgs = $(first_seed).find('div img')
+                if (seed_imgs.length) {
+                    seed_target = seed_imgs[0]
+                }
+            }
+            return false
+        }
+    })
+    return seed_target
+}
+
+// 搜寻X按钮
+function search_x() {
+    var img_x = null
+    $('.h-6.cursor-pointer.mr-2.mb-1').each(function (index, element) {
+        img_x = element
+        return false
+    })
+    return img_x
 }
