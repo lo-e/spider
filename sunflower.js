@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         learn_js
+// @name         aksdkak
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  try to take over the world!
@@ -659,7 +659,15 @@ function search_locked_farms_rect() {
     $('img').each(function (index, element) {
         let class_name = $(element).attr('class')
         if(class_name){
-            let re = RegExp('absolute z-20 hover:img-highlight cursor-pointer')
+            var re = RegExp('absolute z-20 hover:img-highlight cursor-pointer')
+            if(class_name.match(re)){
+                // 找到了
+                let rect = element.getBoundingClientRect()
+                locked_rects.push(rect)
+                return true
+            }
+
+            re = RegExp('absolute z-10 hover:img-highlight cursor-pointer')
             if(class_name.match(re)){
                 // 找到了
                 let rect = element.getBoundingClientRect()
@@ -679,12 +687,20 @@ function search_locked_farms_rect() {
             left = rect.x
             right = rect.x + rect.width
             top = rect.y
-            bottom = rect.y + rect.height
+            if (rect.height <= 60) {
+                bottom = rect.y + rect.height*3
+            }else {
+                bottom = rect.y + rect.height
+            }
         }else {
             left = Math.min(left, rect.x)
             right = Math.max(right, rect.x + rect.width)
             top = Math.min(top, rect.y)
-            bottom = Math.max(bottom, rect.y + rect.height)
+            if (rect.height <= 60) {
+                bottom = Math.max(bottom, rect.y + rect.height*3)
+            }else {
+                bottom = Math.max(bottom, rect.y + rect.height)
+            }
         }
     }
     if(locked_rects.length == 1) {
