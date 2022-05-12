@@ -30,6 +30,8 @@
 
         let element = ev.srcElement
         let element_text = $(element).text()
+
+        // 点击Menu停止/开启种植
         if(element_text){
             if(element_text == 'Menu'){
                 // 结束种植
@@ -39,7 +41,6 @@
                 if (manual_stoping) {
                     custom_log(['****** 手动停止种植 ******'])
                 }else {
-                    seed_processing = false
                     custom_log(['****** 手动启动种植 ******'])
                 }
             }
@@ -104,9 +105,8 @@
 
     // 检查是否有种子
     setInterval(function () {
-        if (!farm_loading) {
-            let seed_n = seed_needed()
-            seed_adding = seed_n
+        if (!farm_loading  && !manual_stoping) {
+            seed_adding = seed_needed()
             if (seed_adding && !seed_processing) {
                 // fake
                 custom_log(['****** 种子不够了！ ******'])
@@ -143,6 +143,10 @@
                                         seed_processing = false
                                     }
                                 }, random_interval(1, 2))
+                            }else {
+                                seed_processing = false
+                                // 没有种子停止种植
+                                manual_stoping = true
                             }
                         }, random_interval(1, 2))
                     }, random_interval(2, 3))
