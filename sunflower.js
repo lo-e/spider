@@ -897,6 +897,12 @@ function search_something_wrong() {
                     wrong_status = true
                     return false
                 }
+
+                let re_c = RegExp('Supply reached')
+                if(text.match(re_c)){
+                    wrong_status = true
+                    return false
+                }
             }
         })
     }
