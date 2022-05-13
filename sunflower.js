@@ -313,6 +313,7 @@
                     box_clicking = true
                     setTimeout(function () {
                         click_element(box, false)
+                        box_clicking = false
                     }, random_interval(0.9, 3))
                 }
 
@@ -328,6 +329,7 @@
                                     custom_log(['****** 点击Close ******'])
 
                                     click_element(element_button, false)
+                                    box_close_clicking = false
                                 }, random_interval(0.5, 1))
                             }
                             return false
@@ -336,8 +338,6 @@
                 })
             }else {
                 box_collecting = false
-                box_clicking = false
-                box_close_clicking = false
             }
 
             // fake
@@ -824,7 +824,6 @@ function search_box() {
             }
         })
     }
-
     return [droped, box]
 }
 
