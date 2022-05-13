@@ -221,6 +221,53 @@
         }
     }, 2000)
 
+    // 检查是否有宝箱掉落
+    setInterval(function () {
+        // 搜寻宝箱
+        let box_result = search_box()
+        let droped = box_result[0]
+        let box = box_result[1]
+        if (droped) {
+            // fake
+            custom_log(['****** 宝箱掉落 ******'])
+
+            box_collecting = true
+            if (box && !box_clicking) {
+                // 点击宝箱
+                // fake
+                custom_log(['****** 点击宝箱 ******'])
+
+                box_clicking = true
+                setTimeout(function () {
+                    click_element(box, false)
+                    box_clicking = false
+                }, random_interval(0.9, 3))
+            }
+
+            $('button').each(function (index_button, element_button) {
+                let button_text = $(element_button).text()
+                if(button_text){
+                    let re = RegExp('Close')
+                    if(button_text.match(re)){
+                        if (!box_close_clicking) {
+                            box_close_clicking = true
+                            setTimeout(function () {
+                                // fake
+                                custom_log(['****** 点击Close ******'])
+
+                                click_element(element_button, false)
+                                box_close_clicking = false
+                            }, random_interval(0.5, 1))
+                        }
+                        return false
+                    }
+                }
+            })
+        }else {
+            box_collecting = false
+        }
+    }, random_interval(1, 2))
+
     // 种植农作物
     var interval_farming = setInterval(()=>{
         if (!manual_stoping && !seed_adding && !finding_goblin) {
@@ -296,51 +343,6 @@
             // fake
             // custom_log(['未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length])
 
-            // 搜寻宝箱
-            let box_result = search_box()
-            let droped = box_result[0]
-            let box = box_result[1]
-            if (droped) {
-                // fake
-                custom_log(['****** 宝箱掉落 ******'])
-
-                box_collecting = true
-                if (box && !box_clicking) {
-                    // 点击宝箱
-                    // fake
-                    custom_log(['****** 点击宝箱 ******'])
-
-                    box_clicking = true
-                    setTimeout(function () {
-                        click_element(box, false)
-                        box_clicking = false
-                    }, random_interval(0.9, 3))
-                }
-
-                $('button').each(function (index_button, element_button) {
-                    let button_text = $(element_button).text()
-                    if(button_text){
-                        let re = RegExp('Close')
-                        if(button_text.match(re)){
-                            if (!box_close_clicking) {
-                                box_close_clicking = true
-                                setTimeout(function () {
-                                    // fake
-                                    custom_log(['****** 点击Close ******'])
-
-                                    click_element(element_button, false)
-                                    box_close_clicking = false
-                                }, random_interval(0.5, 1))
-                            }
-                            return false
-                        }
-                    }
-                })
-            }else {
-                box_collecting = false
-            }
-
-            // fake
             if ((available_crops_ready.length || available_crops_none.length) && !box_collecting) {
                 // 调整农场位置
                 if(!is_draging & !is_farming) {
