@@ -82,6 +82,15 @@
         }
     }, random_interval(3, 5))
 
+    // 检测无效对话框
+    setInterval(function () {
+        let fake_dialog = search_fake_dialog()
+        if (fake_dialog) {
+            let rect = fake_dialog.getBoundingClientRect()
+            click_position(rect.x - 100 * Math.random(), rect.top - 100 * Math.random())
+        }
+    }, random_interval(2, 3))
+
     // 点击Let's farm!
     let interval_start = setInterval(function () {
         let farm_button = search_letsfarm()
@@ -835,6 +844,15 @@ function click_element(element, double_click) {
     }
 }
 
+// 点击某个坐标点
+function click_position(x, y) {
+    let target = document.elementFromPoint(x, y)
+    var mousedown = document.createEvent("MouseEvents");
+    mousedown.initMouseEvent("click",true,true,document.defaultView,0,
+                x, y, x, y,false,false,false,false,0,null);
+    target.dispatchEvent(mousedown);
+}
+
 // 搜寻Let's farm!
 function search_letsfarm() {
     var farm_button = null
@@ -961,6 +979,7 @@ function search_x() {
         img_x = element
         return false
     })
+
     return img_x
 }
 
@@ -1004,4 +1023,26 @@ function search_continue() {
         }
     })
     return continue_button
+}
+
+// 搜寻挖土地精的弹框
+function  search_fake_dialog() {
+    var fake_dialog = null
+    $('span').each(function (index, element) {
+        let text = $(element).text()
+        var re = RegExp('I will keep digging')
+        if(text.match(re)){
+            // 找到了
+            fake_dialog = element
+            return false
+        }
+
+        re = RegExp('The only thing I like')
+        if(text.match(re)){
+            // 找到了
+            fake_dialog = element
+            return false
+        }
+    })
+    return fake_dialog
 }
