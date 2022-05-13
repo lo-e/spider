@@ -21,6 +21,8 @@
     var seed_adding = false
     var seed_processing = false
     var farm_loading = true
+    var finding_goblin = false
+    var catching_goblin = false
 
     // 监听点击
     document.addEventListener("click", function (ev){
@@ -103,9 +105,64 @@
         }
     }, random_interval(2, 3))
 
+    // 检测find_goblin
+    var intervalfind_goblin = setInterval(()=>{
+        let find_goblin_button = search_find_goblin()
+        if (find_goblin_button) {
+            finding_goblin = true
+            setTimeout(function () {
+                click_element(find_goblin_button)
+                // 寻找goblin
+                if (!catching_goblin) {
+                    catching_goblin = true
+                    var interval_catching = setInterval(function () {
+                        if (!farm_loading && !is_draging && !is_farming) {
+                            // fake
+                            console.log('****** 寻找小偷goblin ******')
+                            let stealing_goblin = search_stealing_goblin()
+                            if (stealing_goblin) {
+                                // fake
+                                console.log('****** 确定小偷goblin位置 ******')
+
+                                let interval_draging = setInterval(function () {
+                                    let goblin_rect = stealing_goblin.getBoundingClientRect()
+                                    let direction = drag_direction(goblin_rect, false)
+                                    let direction_x = direction[0]
+                                    let direction_y = direction[1]
+                                    if (direction_x || direction_y) {
+                                        if (!manual_stoping) {
+                                            drag_to_farming(direction_x, direction_y)
+                                        }
+                                    }else {
+                                        // 点击小偷goblin
+                                        click_element(stealing_goblin)
+                                        // 准备点击continue
+                                        var interval_continue = setInterval(function () {
+                                            let continue_button = search_continue()
+                                            if (continue_button) {
+                                                click_element(continue_button)
+                                                finding_goblin = false
+                                                catching_goblin = false
+                                                clearInterval(interval_continue)
+                                            }
+                                        }, random_interval(0.5, 1.5))
+                                        // 停止拖动
+                                        clearInterval(interval_draging)
+                                    }
+                                }, random_interval(1, 2.5))
+
+                                clearInterval(interval_catching)
+                            }
+                        }
+                    }, random_interval(1, 2))
+                }
+            }, random_interval(0.5, 1.5))
+        }
+    }, random_interval(2, 3))
+
     // 检查是否有种子
     setInterval(function () {
-        if (!farm_loading  && !manual_stoping) {
+        if (!farm_loading  && !manual_stoping && !finding_goblin) {
             seed_adding = seed_needed()
             if (seed_adding && !seed_processing) {
                 // fake
@@ -157,7 +214,7 @@
 
     // 种植农作物
     var interval_farming = setInterval(()=>{
-        if (!manual_stoping && !seed_adding) {
+        if (!manual_stoping && !seed_adding && !finding_goblin) {
             let search_results = search_crops()
             let crops_ready = search_results[0]
             let crops_preparing = search_results[1]
@@ -287,7 +344,7 @@
                         for (var i in total_crops) {
                             let crop = total_crops[i]
                             let crop_rect = crop.getBoundingClientRect()
-                            let direction = drag_direction(crop_rect)
+                            let direction = drag_direction(crop_rect, false)
                             let dir_x = direction[0]
                             let dir_y = direction[1]
                             if (dir_x != 0) {
@@ -339,25 +396,37 @@
 
 // ================ 工具 =====================
 // 根据元素坐标获取拖动方向，使元素处于合适的位置
-function drag_direction(element_rect) {
+function drag_direction(element_rect, to_center) {
     let client_width = document.documentElement.clientWidth        // 浏览器窗口不包含滚动条的宽度
     let client_height = document.documentElement.clientHeight       // 浏览器窗口不包含滚动条的高度
 
+    var gap_left = 20
+    var gap_right = 100
+    var gap_top = 100
+    var gap_bottom = 60
+
+    if (to_center) {
+        gap_left = client_width / 3.0
+        gap_right = client_width / 3.0
+        gap_top = client_height / 3.0
+        gap_bottom = client_height / 3.0
+    }
+
     var direction_x = 0
     var direction_y = 0
-    if (element_rect.x <= 20) {
+    if (element_rect.x <= gap_left) {
         // 需要向右拖动
         direction_x = 1
     }
-    if (element_rect.x+element_rect.width >= client_width-100) {
+    if (element_rect.x+element_rect.width >= client_width-gap_right) {
         // 需要向左拖动
         direction_x = -1
     }
-    if (element_rect.y <= 100) {
+    if (element_rect.y <= gap_top) {
         // 需要向下拖动
         direction_y = 1
     }
-    if (element_rect.y+element_rect.height >= client_height-60) {
+    if (element_rect.y+element_rect.height >= client_height-gap_bottom) {
         // 需要向上拖动
         direction_y = -1
     }
@@ -893,4 +962,46 @@ function search_x() {
         return false
     })
     return img_x
+}
+
+// 搜寻find goblin
+function search_find_goblin() {
+    var find_goblin = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Find Goblin') {
+            // 找到了
+            find_goblin = element
+            return false
+        }
+    })
+    return find_goblin
+}
+
+// 搜寻goblin小偷
+function search_stealing_goblin() {
+    var stealing_goblin = null
+    $('img').each(function (index, element) {
+        let img_id = $(element).attr('id')
+        if (img_id == 'shovel') {
+            // 找到了
+            stealing_goblin = element
+            return false
+        }
+    })
+    return stealing_goblin
+}
+
+// 搜寻Continue
+function search_continue() {
+    var continue_button = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Continue') {
+            // 找到了
+            continue_button = element
+            return false
+        }
+    })
+    return continue_button
 }
