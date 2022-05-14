@@ -17,7 +17,10 @@
         console.log('result:', result)
     }, 1000)
 
-    window.confirm = function() {
+    window.confirm = function(confirm) {
+        if (confirm == 'yes or no') {
+            console.log(confirm)
+        }
         return true
     }
 })()
