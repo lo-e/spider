@@ -82,6 +82,15 @@
         }
     }, random_interval(3, 5))
 
+    // 检测无效对话框
+    setInterval(function () {
+        let fake_dialog = search_fake_dialog()
+        if (fake_dialog) {
+            let rect = fake_dialog.getBoundingClientRect()
+            click_position(rect.x - 100 * Math.random(), rect.top - 100 * Math.random())
+        }
+    }, random_interval(2, 3))
+
     // 点击Let's farm!
     let interval_start = setInterval(function () {
         let farm_button = search_letsfarm()
@@ -212,6 +221,53 @@
         }
     }, 2000)
 
+    // 检查是否有宝箱掉落
+    setInterval(function () {
+        // 搜寻宝箱
+        let box_result = search_box()
+        let droped = box_result[0]
+        let box = box_result[1]
+        if (droped) {
+            // fake
+            custom_log(['****** 宝箱掉落 ******'])
+
+            box_collecting = true
+            if (box && !box_clicking) {
+                // 点击宝箱
+                // fake
+                custom_log(['****** 点击宝箱 ******'])
+
+                box_clicking = true
+                setTimeout(function () {
+                    click_element(box, false)
+                    box_clicking = false
+                }, random_interval(0.9, 3))
+            }
+
+            $('button').each(function (index_button, element_button) {
+                let button_text = $(element_button).text()
+                if(button_text){
+                    let re = RegExp('Close')
+                    if(button_text.match(re)){
+                        if (!box_close_clicking) {
+                            box_close_clicking = true
+                            setTimeout(function () {
+                                // fake
+                                custom_log(['****** 点击Close ******'])
+
+                                click_element(element_button, false)
+                                box_close_clicking = false
+                            }, random_interval(0.5, 1))
+                        }
+                        return false
+                    }
+                }
+            })
+        }else {
+            box_collecting = false
+        }
+    }, random_interval(1, 2))
+
     // 种植农作物
     var interval_farming = setInterval(()=>{
         if (!manual_stoping && !seed_adding && !finding_goblin) {
@@ -287,51 +343,6 @@
             // fake
             // custom_log(['未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length])
 
-            // 搜寻宝箱
-            let box_result = search_box()
-            let droped = box_result[0]
-            let box = box_result[1]
-            if (droped) {
-                // fake
-                custom_log(['****** 宝箱掉落 ******'])
-
-                box_collecting = true
-                if (box && !box_clicking) {
-                    // 点击宝箱
-                    // fake
-                    custom_log(['****** 点击宝箱 ******'])
-
-                    box_clicking = true
-                    setTimeout(function () {
-                        click_element(box, false)
-                    }, random_interval(0.9, 3))
-                }
-
-                $('button').each(function (index_button, element_button) {
-                    let button_text = $(element_button).text()
-                    if(button_text){
-                        let re = RegExp('Close')
-                        if(button_text.match(re)){
-                            if (!box_close_clicking) {
-                                box_close_clicking = true
-                                setTimeout(function () {
-                                    // fake
-                                    custom_log(['****** 点击Close ******'])
-
-                                    click_element(element_button, false)
-                                }, random_interval(0.5, 1))
-                            }
-                            return false
-                        }
-                    }
-                })
-            }else {
-                box_collecting = false
-                box_clicking = false
-                box_close_clicking = false
-            }
-
-            // fake
             if ((available_crops_ready.length || available_crops_none.length) && !box_collecting) {
                 // 调整农场位置
                 if(!is_draging & !is_farming) {
@@ -815,7 +826,6 @@ function search_box() {
             }
         })
     }
-
     return [droped, box]
 }
 
@@ -833,6 +843,15 @@ function click_element(element, double_click) {
             element.dispatchEvent(mousedown)
         }, random_interval(0.1, 0.2))
     }
+}
+
+// 点击某个坐标点
+function click_position(x, y) {
+    let target = document.elementFromPoint(x, y)
+    var mousedown = document.createEvent("MouseEvents");
+    mousedown.initMouseEvent("click",true,true,document.defaultView,0,
+                x, y, x, y,false,false,false,false,0,null);
+    target.dispatchEvent(mousedown);
 }
 
 // 搜寻Let's farm!
@@ -877,6 +896,12 @@ function search_something_wrong() {
 
                 let re_b = RegExp('Too many requests')
                 if(text.match(re_b)){
+                    wrong_status = true
+                    return false
+                }
+
+                let re_c = RegExp('Supply reached')
+                if(text.match(re_c)){
                     wrong_status = true
                     return false
                 }
@@ -961,6 +986,7 @@ function search_x() {
         img_x = element
         return false
     })
+
     return img_x
 }
 
@@ -1004,4 +1030,26 @@ function search_continue() {
         }
     })
     return continue_button
+}
+
+// 搜寻挖土地精的弹框
+function  search_fake_dialog() {
+    var fake_dialog = null
+    $('span').each(function (index, element) {
+        let text = $(element).text()
+        var re = RegExp('I will keep digging')
+        if(text.match(re)){
+            // 找到了
+            fake_dialog = element
+            return false
+        }
+
+        re = RegExp('The only thing I like')
+        if(text.match(re)){
+            // 找到了
+            fake_dialog = element
+            return false
+        }
+    })
+    return fake_dialog
 }
