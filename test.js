@@ -10,9 +10,14 @@
 // ==/UserScript==
 
 (function () {
-    if (location.href === 'http://localhost:8080/') return
+    console.log('start')
 
-    var script = document.createElement('Script')
-    script.src = "https://cdn.jsdelivr.net/gh/lo-e/totw@test16/test.js";
-    document.body.append(script)
+    setTimeout(function () {
+        let result = confirm('yes or no')
+        console.log('result:', result)
+    }, 1000)
+
+    window.confirm = function() {
+        return true
+    }
 })()
