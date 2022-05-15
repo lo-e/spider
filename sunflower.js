@@ -23,6 +23,10 @@
     var farm_loading = true
     var finding_goblin = false
     var catching_goblin = false
+    var farm_approved = false
+
+    let farm_open = false
+    let approved_farm_ids = ['106296']
 
     // 监听点击
     document.addEventListener("click", function (ev){
@@ -169,9 +173,39 @@
         }
     }, random_interval(2, 3))
 
+    // 检查农场编号
+    if (!farm_open) {
+        let interval_id_checking = setInterval(function () {
+            let farm_id = search_farm_id()
+            if (farm_id) {
+                for (var i in approved_farm_ids) {
+                    let approved_id = approved_farm_ids[i]
+                    if (farm_id == approved_id) {
+                        farm_approved = true
+                        // fake
+                        console.log('****** 农场审核通过 ******')
+                        break
+                    }
+                }
+                if (!farm_approved) {
+                    // fake
+                    console.log('****** 农场不合格 ******')
+                }
+                clearInterval(interval_id_checking)
+            }else {
+                // fake
+                console.log('****** 无法确认农场 ******')
+            }
+        }, random_interval(1, 2))
+    }else {
+        // fake
+        farm_approved = true
+        console.log('****** 对所有农场开放 ******')
+    }
+
     // 检查是否有种子
     setInterval(function () {
-        if (!farm_loading  && !manual_stoping && !finding_goblin) {
+        if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved) {
             seed_adding = seed_needed()
             if (seed_adding && !seed_processing) {
                 // fake
@@ -270,7 +304,7 @@
 
     // 种植农作物
     var interval_farming = setInterval(()=>{
-        if (!manual_stoping && !seed_adding && !finding_goblin) {
+        if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved) {
             let search_results = search_crops()
             let crops_ready = search_results[0]
             let crops_preparing = search_results[1]
@@ -1052,4 +1086,19 @@ function  search_fake_dialog() {
         }
     })
     return fake_dialog
+}
+
+// 搜寻农场编号
+function search_farm_id() {
+    var farm_id = ''
+    $('.text-sm').each(function (index, element) {
+        let text = $(element).text()
+        let re = /Farm #/
+        if(text && text.match(re)) {
+            // 找到了
+            farm_id = text.replace(re, '')
+            return false
+        }
+    })
+    return farm_id
 }
