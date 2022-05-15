@@ -25,8 +25,8 @@
     var catching_goblin = false
     var farm_approved = false
 
-    let farm_open = false
-    let approved_farm_ids = ['106296']
+    let farm_open = true
+    let approved_farm_ids = ['']
 
     // 监听点击
     document.addEventListener("click", function (ev){
