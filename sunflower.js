@@ -4,6 +4,7 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       loe
+// @match        https://sunflower-land.com*
 // @match        https://sunflower-land.com/play*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @require      https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js
@@ -24,9 +25,38 @@
     var finding_goblin = false
     var catching_goblin = false
     var farm_approved = false
+    var saving = false
 
     let farm_open = true
     let approved_farm_ids = ['']
+
+    if (location.href == 'https://sunflower-land.com/') {
+        open_new()
+        return
+    }
+
+    // 每隔一段时间保存资源，打开新页面，并且关闭当前页面
+    setInterval(function () {
+        let save_ = search_save_btn()
+        if (save_) {
+            // 点击保存
+            click_element(save_)
+        }
+
+        // 等待保存完成
+        var waiting_time = 0
+        let interval_waiting = setInterval(function () {
+            waiting_time ++
+            let waiting_save = search_save_btn()
+            if (waiting_save) {
+                clearInterval(interval_waiting)
+                open_new()
+            }else if (waiting_time >=60) {
+                waiting_time = 0
+                clearInterval(interval_waiting)
+            }
+        }, random_interval(1, 2))
+    }, 60 * 60 * 1000)
 
     // 监听点击
     document.addEventListener("click", function (ev){
@@ -75,8 +105,11 @@
         if(wrong_status) {
             if (reload_waiting == 0) {
                 // fake
-                custom_log(['****** 页面出错，刷新！ ******'])
-                location.reload()
+                // custom_log(['****** 页面出错，刷新！ ******'])
+                // location.reload()
+
+                custom_log(['****** 页面出错，重开！ ******'])
+                open_new()
             }
 
             reload_waiting ++
@@ -1101,4 +1134,26 @@ function search_farm_id() {
         }
     })
     return farm_id
+}
+
+// 打开新页面，并且关闭当前页面
+function open_new() {
+    open('https://sunflower-land.com/play')
+    setTimeout(function () {
+        close()
+    }, random_interval(1, 2))
+}
+
+// 搜寻save按钮
+function search_save_btn() {
+    var save_ = null
+    $('span').each(function (index, element) {
+        let text = $(element).text()
+        if(text && text == 'Save') {
+            // 找到了
+            save_ = element
+            return false
+        }
+    })
+    return save_
 }

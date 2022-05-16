@@ -347,6 +347,13 @@ clearTimeout()          // 关闭一次性定时器
 setInterval()           // 开启重复性定时器
 clearInterval()         // 关闭重复性定时器
 
+window.confirm = function(confirm) {
+    if (confirm == 'yes or no') {
+        console.log(confirm)
+    }
+    return true
+}
+
 // 判断类型
 typeof obj
 obj instanceof Object
