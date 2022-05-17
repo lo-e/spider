@@ -13,7 +13,18 @@
 (function () {
     console.log('start')
 
-    console.log(location.href)
+    setTimeout(function () {
+        open('https://weibo.com')
+        confirm('yes or no')
+    }, 2000)
+
+    window.confirm = function(confirm) {
+        if (confirm == 'yes or no') {
+            console.log(confirm)
+        }
+        open('https://www.zhihu.com')
+        // return true
+    }
 
     console.log('end')
 })()

@@ -25,7 +25,7 @@
     var finding_goblin = false
     var catching_goblin = false
     var farm_approved = false
-    var saving = false
+    var last_farming_until = 0
 
     let farm_open = true
     let approved_farm_ids = ['']
@@ -44,15 +44,21 @@
         }
 
         // 等待保存完成
-        var waiting_time = 0
+        var waiting_count = 0
         let interval_waiting = setInterval(function () {
-            waiting_time ++
+            waiting_count ++
             let waiting_save = search_save_btn()
             if (waiting_save) {
-                clearInterval(interval_waiting)
-                open_new()
-            }else if (waiting_time >=60) {
-                waiting_time = 0
+                last_farming_until ++
+                if (last_farming_until == 60) {
+                    click_element(save_)
+                }
+                if (last_farming_until > 60) {
+                    clearInterval(interval_waiting)
+                    open_new()
+                }
+            }else if (waiting_count >= 10*60) {
+                waiting_count = 0
                 clearInterval(interval_waiting)
             }
         }, random_interval(1, 2))
@@ -446,6 +452,7 @@
                             }
                             if(crop) {
                                 is_farming = true
+                                last_farming_until = 0
                                 if (is_ready) {
                                     custom_log(['****** 大丰收 ******'])
                                 }else {
