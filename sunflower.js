@@ -25,7 +25,7 @@
     var finding_goblin = false
     var catching_goblin = false
     var farm_approved = false
-    var last_farming_until = 0
+    var last_action_until = 0
 
     let farm_open = true
     let approved_farm_ids = ['']
@@ -48,12 +48,12 @@
         let interval_waiting = setInterval(function () {
             waiting_count ++
             let waiting_save = search_save_btn()
-            if (waiting_save) {
-                last_farming_until ++
-                if (last_farming_until == 60) {
+            if (waiting_save && !manual_stoping) {
+                last_action_until ++
+                if (last_action_until == 60) {
                     click_element(save_)
                 }
-                if (last_farming_until > 60) {
+                if (last_action_until > 60) {
                     clearInterval(interval_waiting)
                     open_new()
                 }
@@ -162,12 +162,15 @@
         let find_goblin_button = search_find_goblin()
         if (find_goblin_button) {
             finding_goblin = true
+            last_action_until = 0
             setTimeout(function () {
                 click_element(find_goblin_button)
+                last_action_until = 0
                 // 寻找goblin
                 if (!catching_goblin) {
                     catching_goblin = true
                     var interval_catching = setInterval(function () {
+                        last_action_until = 0
                         if (!farm_loading && !is_draging && !is_farming) {
                             // fake
                             console.log('****** 寻找小偷goblin ******')
@@ -177,6 +180,7 @@
                                 console.log('****** 确定小偷goblin位置 ******')
 
                                 let interval_draging = setInterval(function () {
+                                    last_action_until = 0
                                     let goblin_rect = stealing_goblin.getBoundingClientRect()
                                     let direction = drag_direction(goblin_rect, false)
                                     let direction_x = direction[0]
@@ -188,6 +192,7 @@
                                     }else {
                                         // 点击小偷goblin
                                         click_element(stealing_goblin)
+                                        last_action_until = 0
                                         // 准备点击continue
                                         var interval_continue = setInterval(function () {
                                             let continue_button = search_continue()
@@ -195,6 +200,7 @@
                                                 click_element(continue_button)
                                                 finding_goblin = false
                                                 catching_goblin = false
+                                                last_action_until = 0
                                                 clearInterval(interval_continue)
                                             }
                                         }, random_interval(0.5, 1.5))
@@ -263,23 +269,27 @@
 
                 if (bag) {
                     seed_processing = true
+                    last_action_until = 0
                     setTimeout(function () {
                         // fake
                         custom_log(['****** 正在添加种子！ ******'])
 
                         click_element(bag)
+                        last_action_until = 0
                         setTimeout(function () {
                             // 搜索背包种子
                             let seed_target = search_bag_seeds()
                             if (seed_target) {
                                 // 选择种子
                                 click_element(seed_target)
+                                last_action_until = 0
                                 setTimeout(function () {
                                     // 结束切换种子
                                     let img_x = search_x()
                                     if (img_x) {
                                         click_element(img_x)
                                         seed_processing = false
+                                        last_action_until = 0
                                     }
                                 }, random_interval(1, 2))
                             }else {
@@ -304,6 +314,7 @@
             // fake
             custom_log(['****** 宝箱掉落 ******'])
 
+            last_action_until = 0
             box_collecting = true
             if (box && !box_clicking) {
                 // 点击宝箱
@@ -314,6 +325,7 @@
                 setTimeout(function () {
                     click_element(box, false)
                     box_clicking = false
+                    last_action_until = 0
                 }, random_interval(0.9, 3))
             }
 
@@ -330,6 +342,7 @@
 
                                 click_element(element_button, false)
                                 box_close_clicking = false
+                                last_action_until = 0
                             }, random_interval(0.5, 1))
                         }
                         return false
@@ -452,7 +465,7 @@
                             }
                             if(crop) {
                                 is_farming = true
-                                last_farming_until = 0
+                                last_action_until = 0
                                 if (is_ready) {
                                     custom_log(['****** 大丰收 ******'])
                                 }else {
@@ -464,6 +477,7 @@
                                     move_mouse(null, false, realtime_pos, click_position)
                                     setTimeout(function () {
                                         click_element(crop, is_ready)
+                                        last_action_until = 0
                                         is_farming = false
                                     }, 600)
                                 }, random_interval(0, 2))
@@ -1148,7 +1162,7 @@ function open_new() {
     open('https://sunflower-land.com/play')
     setTimeout(function () {
         close()
-    }, random_interval(1, 2))
+    }, random_interval(0, 1))
 }
 
 // 搜寻save按钮
