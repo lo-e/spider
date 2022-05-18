@@ -43,25 +43,29 @@
             click_element(save_)
         }
 
-        // 等待保存完成
-        var waiting_count = 0
-        let interval_waiting = setInterval(function () {
-            waiting_count ++
-            let waiting_save = search_save_btn()
-            if (waiting_save && !manual_stoping) {
-                last_action_until ++
-                if (last_action_until == 60) {
-                    click_element(save_)
-                }
-                if (last_action_until > 60) {
+        let time_dic = utc_zone_time(8)
+        let hour = time_dic['hour']
+        if (hour >= 8 && hour <= 23) {
+            // 等待保存完成
+            var waiting_count = 0
+            let interval_waiting = setInterval(function () {
+                waiting_count ++
+                let waiting_save = search_save_btn()
+                if (waiting_save && !manual_stoping) {
+                    last_action_until ++
+                    if (last_action_until == 60) {
+                        click_element(save_)
+                    }
+                    if (last_action_until > 60) {
+                        clearInterval(interval_waiting)
+                        open_new()
+                    }
+                }else if (waiting_count >= 10*60) {
+                    waiting_count = 0
                     clearInterval(interval_waiting)
-                    open_new()
                 }
-            }else if (waiting_count >= 10*60) {
-                waiting_count = 0
-                clearInterval(interval_waiting)
-            }
-        }, random_interval(1, 2))
+            }, random_interval(1, 2))
+        }
     }, 60 * 60 * 1000)
 
     // 监听点击
@@ -706,6 +710,28 @@ function custom_log(content_list) {
     if (full_content) {
         console.log(full_content)
     }
+}
+
+// 获取当前时间年月日（根据UTC时区自动转换）
+function utc_zone_time(utc) {
+    let time = new Date(Date.now())
+    let year = time.getUTCFullYear()
+    let month = time.getUTCMonth() + 1
+    let day = time.getUTCDate()
+    let hour = time.getUTCHours() + utc
+    if (hour >= 24) {
+        hour -= 24
+    }
+    let minute = time.getUTCMinutes()
+    let second = time.getUTCSeconds()
+    let time_str = year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second
+    return {'time_str':time_str,
+            'year':year,
+            'month':month,
+            'day':day,
+            'hour':hour,
+            'minute':minute,
+            'second':second}
 }
 
 // ================ 农场 =====================

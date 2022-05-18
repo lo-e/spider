@@ -361,3 +361,25 @@ obj instanceof Object
 // 创建区域位置
 new DOMRect(0, 0, -100, 100)
 new DOMPoint(0, 0);
+
+// 获取当前时间年月日（根据UTC时区自动转换）
+function utc_zone_time(utc) {
+    let time = new Date(Date.now())
+    let year = time.getUTCFullYear()
+    let month = time.getUTCMonth() + 1
+    let day = time.getUTCDate()
+    let hour = time.getUTCHours() + utc
+    if (hour >= 24) {
+        hour -= 24
+    }
+    let minute = time.getUTCMinutes()
+    let second = time.getUTCSeconds()
+    let time_str = year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second
+    return {'time_str':time_str,
+            'year':year,
+            'month':month,
+            'day':day,
+            'hour':hour,
+            'minute':minute,
+            'second':second}
+}
