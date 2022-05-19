@@ -1079,19 +1079,22 @@ function search_bag_seeds() {
             }
         })
         if (seed_bar) {
-            var seed_list = $(element).find('div div')
+            var seed_list = $(element).find('div relative')
             if (seed_list.length) {
-                let first_seed = seed_list[0]
-                let seed_imgs = $(first_seed).find('div img')
-                $(seed_imgs).each(function (image_index, image) {
-                    let img_src = image.attr('src')
-                    if (img_src) {
-                        let re = /iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8/
-                        if (img_src.match(re)) {
+                $(seed_list).each(function (seed_index, seed) {
+                    let seed_imgs = $(seed).find('div img')
+                    $(seed_imgs).each(function (image_index, image) {
+                        let img_src = image.attr('src')
+                        if (img_src) {
                             // 排除花菜
-                            return true
+                            let re = /iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8/
+                            if (!img_src.match(re)) {
+                                seed_target = image
+                                return false
+                            }
                         }
-                        seed_target = image
+                    })
+                    if (seed_target) {
                         return false
                     }
                 })
