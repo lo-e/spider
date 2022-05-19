@@ -1079,12 +1079,12 @@ function search_bag_seeds() {
             }
         })
         if (seed_bar) {
-            var seed_list = $(element).find('div relative')
+            var seed_list = $(element).find('div .relative')
             if (seed_list.length) {
                 $(seed_list).each(function (seed_index, seed) {
                     let seed_imgs = $(seed).find('div img')
                     $(seed_imgs).each(function (image_index, image) {
-                        let img_src = image.attr('src')
+                        let img_src = $(image).attr('src')
                         if (img_src) {
                             // 排除花菜
                             let re = /iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8/
