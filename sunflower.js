@@ -1083,9 +1083,18 @@ function search_bag_seeds() {
             if (seed_list.length) {
                 let first_seed = seed_list[0]
                 let seed_imgs = $(first_seed).find('div img')
-                if (seed_imgs.length) {
-                    seed_target = seed_imgs[0]
-                }
+                $(seed_imgs).each(function (image_index, image) {
+                    let img_src = image.attr('src')
+                    if (img_src) {
+                        let re = /iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8/
+                        if (img_src.match(re)) {
+                            // 排除花菜
+                            return true
+                        }
+                        seed_target = image
+                        return false
+                    }
+                })
             }
             return false
         }
