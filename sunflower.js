@@ -1134,8 +1134,8 @@ function search_find_goblin() {
 function search_stealing_goblin() {
     var stealing_goblin = null
     $('img').each(function (index, element) {
-        let img_id = $(element).attr('id')
-        if (img_id == 'shovel') {
+        let img_src = $(element).attr('src')
+        if (img_src == './assets/goblin_jump_shovel.829081a3.gif') {
             // 找到了
             stealing_goblin = element
             return false
