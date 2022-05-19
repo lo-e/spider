@@ -183,10 +183,32 @@
                                 // fake
                                 console.log('****** 确定小偷goblin位置 ******')
 
+                                var last_goblin_rect = null
+                                var current_goblin_rect = null
+                                var invalid_move_count = 0
                                 let interval_draging = setInterval(function () {
                                     last_action_until = 0
-                                    let goblin_rect = stealing_goblin.getBoundingClientRect()
-                                    let direction = drag_direction(goblin_rect, false)
+                                    if (invalid_move_count >= 10) {
+                                        // 无法拖拽到安全位置范围，手动停止脚本
+                                        manual_stoping = true
+                                        finding_goblin = false
+                                        catching_goblin = false
+                                        clearInterval(interval_draging)
+                                    }
+
+                                    if (current_goblin_rect) {
+                                        last_goblin_rect = current_goblin_rect
+                                    }
+                                    current_goblin_rect = stealing_goblin.getBoundingClientRect()
+
+                                    // 统计无效移动
+                                    if (last_goblin_rect && current_goblin_rect) {
+                                        if (!is_valid_move(last_goblin_rect, current_goblin_rect)) {
+                                            invalid_move_count ++
+                                        }
+                                    }
+
+                                    let direction = drag_direction(current_goblin_rect, false)
                                     let direction_x = direction[0]
                                     let direction_y = direction[1]
                                     if (direction_x || direction_y) {
@@ -1215,4 +1237,15 @@ function search_save_btn() {
         }
     })
     return save_
+}
+
+// 根据前后位置判断是否移动符合标准
+function is_valid_move(rect_1, rect_2) {
+    let x_diff = Math.abs(rect_1.x - rect_2.x)
+    let y_diff = Math.abs(rect_1.y - rect_2.y)
+    if (x_diff <= 10 && y_diff <= 10) {
+        return false
+    }else {
+        return true
+    }
 }
