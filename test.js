@@ -12,7 +12,9 @@
 (function () {
     console.log('start')
 
-    console.log(utc_zone_time(19))
+    setInterval(function () {
+        console.log('****** 循环测试 ******')
+    }, 2000)
 
     console.log('end')
 })()

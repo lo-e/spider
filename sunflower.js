@@ -10,514 +10,530 @@
 // @require      https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js
 // ==/UserScript==
 
-(function() {
-    custom_log(['start！'])
-    var realtime_pos = new DOMPoint(0, 0)
-    var manual_stoping = false
-    var is_draging = false
-    var is_farming = false
-    var box_collecting = false
-    var box_clicking = false
-    var box_close_clicking = false
-    var seed_adding = false
-    var seed_processing = false
-    var farm_loading = true
-    var finding_goblin = false
-    var catching_goblin = false
-    var farm_approved = false
-    var last_action_until = 0
+var loading_waiting_time = 120
+var loading_success = false
+var interval_waitting = setInterval(function () {
+    loading_waiting_time --
+    if (loading_success) {
+        console.log('****** 加载成功！！ ******')
+        clearInterval(interval_waitting)
 
-    let farm_open = true
-    let approved_farm_ids = ['']
+    }else {
+        if (loading_waiting_time <= 0) {
+            open_new()
+            clearInterval(interval_waitting)
+        }else {
+            console.log('****** 网页等待中..', loading_waiting_time, ' ******')
+        }
+    }
+}, 1000)
 
-    if (location.href == 'https://sunflower-land.com/') {
-        open_new()
-        return
+// ==================================== 正式脚本 ====================================
+custom_log(['start！'])
+var realtime_pos = new DOMPoint(0, 0)
+var manual_stoping = false
+var is_draging = false
+var is_farming = false
+var box_collecting = false
+var box_clicking = false
+var box_close_clicking = false
+var seed_adding = false
+var seed_processing = false
+var farm_loading = true
+var finding_goblin = false
+var catching_goblin = false
+var farm_approved = false
+var last_action_until = 0
+
+let farm_open = true
+let approved_farm_ids = ['']
+
+if (location.href == 'https://sunflower-land.com/') {
+    open_new()
+    return
+}
+
+// 每隔一段时间保存资源，打开新页面，并且关闭当前页面
+setInterval(function () {
+    let save_ = search_save_btn()
+    if (save_) {
+        // 点击保存
+        click_element(save_)
     }
 
-    // 每隔一段时间保存资源，打开新页面，并且关闭当前页面
-    setInterval(function () {
-        let save_ = search_save_btn()
-        if (save_) {
-            // 点击保存
-            click_element(save_)
-        }
-
-        let time_dic = utc_zone_time(8)
-        let hour = time_dic['hour']
-        if (hour >= 8 && hour <= 23) {
-            // 等待保存完成
-            var waiting_count = 0
-            let interval_waiting = setInterval(function () {
-                waiting_count ++
-                let waiting_save = search_save_btn()
-                if (waiting_save && !manual_stoping) {
-                    last_action_until ++
-                    if (last_action_until == 60) {
-                        click_element(save_)
-                    }
-                    if (last_action_until > 60) {
-                        clearInterval(interval_waiting)
-                        open_new()
-                    }
-                }else if (waiting_count >= 10*60) {
-                    waiting_count = 0
+    let time_dic = utc_zone_time(8)
+    let hour = time_dic['hour']
+    if (hour >= 8 && hour <= 23) {
+        // 等待保存完成
+        var waiting_count = 0
+        let interval_waiting = setInterval(function () {
+            waiting_count ++
+            let waiting_save = search_save_btn()
+            if (waiting_save && !manual_stoping) {
+                last_action_until ++
+                if (last_action_until == 60) {
+                    click_element(save_)
+                }
+                if (last_action_until > 60) {
                     clearInterval(interval_waiting)
+                    open_new()
                 }
-            }, random_interval(1, 2))
-        }
-    }, 60 * 60 * 1000)
-
-    // 监听点击
-    document.addEventListener("click", function (ev){
-        var oev = ev || event
-        let clientX = oev.clientX
-        let clientY = oev.clientY
-
-        let element = ev.srcElement
-        let element_text = $(element).text()
-
-        // 点击Menu停止/开启种植
-        if(element_text){
-            if(element_text == 'Menu'){
-                // 结束种植
-                manual_stoping = !manual_stoping
-                // fake
-                custom_log(['****** click text:', element_text, '******'])
-                if (manual_stoping) {
-                    custom_log(['****** 手动停止种植 ******'])
-                }else {
-                    custom_log(['****** 手动启动种植 ******'])
-                }
-            }
-        }
-
-        // custom_log(['\n'])
-        // custom_log(['click!'])
-        // console.log(element)
-        // custom_log(['横坐标：'+clientX])
-        // custom_log(['纵坐标：'+clientY])
-        // custom_log(['\n'])
-    })
-
-    // 记录实时鼠标位置
-    document.addEventListener("mousemove", function (ev){
-        var oev = ev || event
-        let clientX = oev.clientX
-        let clientY = oev.clientY
-        realtime_pos = new DOMPoint(clientX, clientY)
-    });
-
-    // 检测页面出错，刷新页面
-    var reload_waiting = 0
-    setInterval(function () {
-        let wrong_status = search_something_wrong()
-        if(wrong_status) {
-            if (reload_waiting == 0) {
-                // fake
-                // custom_log(['****** 页面出错，刷新！ ******'])
-                // location.reload()
-
-                custom_log(['****** 页面出错，重开！ ******'])
-                open_new()
-            }
-
-            reload_waiting ++
-            if (reload_waiting >= 5) {
-                reload_waiting = 0
-            }
-        }
-    }, random_interval(3, 5))
-
-    // 检测无效对话框
-    setInterval(function () {
-        let fake_dialog = search_fake_dialog()
-        if (fake_dialog) {
-            let rect = fake_dialog.getBoundingClientRect()
-            click_position(rect.x - 100 * Math.random(), rect.top - 100 * Math.random())
-        }
-    }, random_interval(2, 3))
-
-    // 点击Let's farm!
-    let interval_start = setInterval(function () {
-        let farm_button = search_letsfarm()
-        if(farm_button) {
-            click_element(farm_button, false)
-            // 检查是否loading
-            let interval_loading = setInterval(function () {
-                let loading = is_loading()
-                farm_loading = loading
-                if (loading) {
-                    // fake
-                    custom_log(['****** 加载中 ******'])
-                }else {
-                    // fake
-                    custom_log(['****** 加载完成 ******'])
-                    clearInterval(interval_loading)
-                }
-            }, random_interval(1, 2))
-
-            clearInterval(interval_start)
-        }
-    }, random_interval(2, 3))
-
-    // 检测find_goblin
-    var intervalfind_goblin = setInterval(()=>{
-        let find_goblin_button = search_find_goblin()
-        if (find_goblin_button) {
-            finding_goblin = true
-            last_action_until = 0
-            setTimeout(function () {
-                click_element(find_goblin_button)
-                last_action_until = 0
-                // 寻找goblin
-                if (!catching_goblin) {
-                    catching_goblin = true
-                    var interval_catching = setInterval(function () {
-                        last_action_until = 0
-                        if (!farm_loading && !is_draging && !is_farming) {
-                            // fake
-                            console.log('****** 寻找小偷goblin ******')
-                            let stealing_goblin = search_stealing_goblin()
-                            if (stealing_goblin) {
-                                // fake
-                                console.log('****** 确定小偷goblin位置 ******')
-
-                                var last_goblin_rect = null
-                                var current_goblin_rect = null
-                                var invalid_move_count = 0
-                                let interval_draging = setInterval(function () {
-                                    last_action_until = 0
-                                    if (invalid_move_count >= 10) {
-                                        // 无法拖拽到安全位置范围，手动停止脚本
-                                        manual_stoping = true
-                                        finding_goblin = false
-                                        catching_goblin = false
-                                        clearInterval(interval_draging)
-                                    }
-
-                                    if (current_goblin_rect) {
-                                        last_goblin_rect = current_goblin_rect
-                                    }
-                                    current_goblin_rect = stealing_goblin.getBoundingClientRect()
-
-                                    // 统计无效移动
-                                    if (last_goblin_rect && current_goblin_rect) {
-                                        if (!is_valid_move(last_goblin_rect, current_goblin_rect)) {
-                                            invalid_move_count ++
-                                        }
-                                    }
-
-                                    let direction = drag_direction(current_goblin_rect, false)
-                                    let direction_x = direction[0]
-                                    let direction_y = direction[1]
-                                    if (direction_x || direction_y) {
-                                        if (!manual_stoping) {
-                                            drag_to_farming(direction_x, direction_y)
-                                        }
-                                    }else {
-                                        // 点击小偷goblin
-                                        click_element(stealing_goblin)
-                                        last_action_until = 0
-                                        // 准备点击continue
-                                        var interval_continue = setInterval(function () {
-                                            let continue_button = search_continue()
-                                            if (continue_button) {
-                                                click_element(continue_button)
-                                                finding_goblin = false
-                                                catching_goblin = false
-                                                last_action_until = 0
-                                                clearInterval(interval_continue)
-                                            }
-                                        }, random_interval(0.5, 1.5))
-                                        // 停止拖动
-                                        clearInterval(interval_draging)
-                                    }
-                                }, random_interval(1, 2.5))
-
-                                clearInterval(interval_catching)
-                            }
-                        }
-                    }, random_interval(1, 2))
-                }
-            }, random_interval(0.5, 1.5))
-        }
-    }, random_interval(2, 3))
-
-    // 检查农场编号
-    if (!farm_open) {
-        let interval_id_checking = setInterval(function () {
-            let farm_id = search_farm_id()
-            if (farm_id) {
-                for (var i in approved_farm_ids) {
-                    let approved_id = approved_farm_ids[i]
-                    if (farm_id == approved_id) {
-                        farm_approved = true
-                        // fake
-                        console.log('****** 农场审核通过 ******')
-                        break
-                    }
-                }
-                if (!farm_approved) {
-                    // fake
-                    console.log('****** 农场不合格 ******')
-                }
-                clearInterval(interval_id_checking)
-            }else {
-                // fake
-                console.log('****** 无法确认农场 ******')
+            }else if (waiting_count >= 10*60) {
+                waiting_count = 0
+                clearInterval(interval_waiting)
             }
         }, random_interval(1, 2))
-    }else {
-        // fake
-        farm_approved = true
-        console.log('****** 对所有农场开放 ******')
+    }
+}, 60 * 60 * 1000)
+
+// 监听点击
+document.addEventListener("click", function (ev){
+    var oev = ev || event
+    let clientX = oev.clientX
+    let clientY = oev.clientY
+
+    let element = ev.srcElement
+    let element_text = $(element).text()
+
+    // 点击Menu停止/开启种植
+    if(element_text){
+        if(element_text == 'Menu'){
+            // 结束种植
+            manual_stoping = !manual_stoping
+            // fake
+            custom_log(['****** click text:', element_text, '******'])
+            if (manual_stoping) {
+                custom_log(['****** 手动停止种植 ******'])
+            }else {
+                custom_log(['****** 手动启动种植 ******'])
+            }
+        }
     }
 
-    // 检查是否有种子
-    setInterval(function () {
-        if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved) {
-            seed_adding = seed_needed()
-            if (seed_adding && !seed_processing) {
-                // fake
-                custom_log(['****** 种子不够了！ ******'])
+    // custom_log(['\n'])
+    // custom_log(['click!'])
+    // console.log(element)
+    // custom_log(['横坐标：'+clientX])
+    // custom_log(['纵坐标：'+clientY])
+    // custom_log(['\n'])
+})
 
-                // 切换种子
-                var bag = null
-                $('.w-8.mb-1').each(function (index, element) {
-                    let alt = $(element).attr('alt')
-                    if (alt == 'inventory') {
-                        // 找到了背包
-                        bag = element
-                        return false
-                    }
-                })
+// 记录实时鼠标位置
+document.addEventListener("mousemove", function (ev){
+    var oev = ev || event
+    let clientX = oev.clientX
+    let clientY = oev.clientY
+    realtime_pos = new DOMPoint(clientX, clientY)
+});
 
-                if (bag) {
-                    seed_processing = true
-                    last_action_until = 0
-                    setTimeout(function () {
-                        // fake
-                        custom_log(['****** 正在添加种子！ ******'])
-
-                        click_element(bag)
-                        last_action_until = 0
-                        setTimeout(function () {
-                            // 搜索背包种子
-                            let seed_target = search_bag_seeds()
-                            if (seed_target) {
-                                // 选择种子
-                                click_element(seed_target)
-                                last_action_until = 0
-                                setTimeout(function () {
-                                    // 结束切换种子
-                                    let img_x = search_x()
-                                    if (img_x) {
-                                        click_element(img_x)
-                                        seed_processing = false
-                                        last_action_until = 0
-                                    }
-                                }, random_interval(1, 2))
-                            }else {
-                                seed_processing = false
-                                // 没有种子停止种植
-                                manual_stoping = true
-                            }
-                        }, random_interval(1, 2))
-                    }, random_interval(2, 3))
-                }
-            }
-        }
-    }, 2000)
-
-    // 检查是否有宝箱掉落
-    setInterval(function () {
-        // 搜寻宝箱
-        let box_result = search_box()
-        let droped = box_result[0]
-        let box = box_result[1]
-        if (droped) {
+// 检测页面出错，刷新页面
+var reload_waiting = 0
+setInterval(function () {
+    let wrong_status = search_something_wrong()
+    if(wrong_status) {
+        if (reload_waiting == 0) {
             // fake
-            custom_log(['****** 宝箱掉落 ******'])
+            // custom_log(['****** 页面出错，刷新！ ******'])
+            // location.reload()
 
-            last_action_until = 0
-            box_collecting = true
-            if (box && !box_clicking) {
-                // 点击宝箱
+            custom_log(['****** 页面出错，重开！ ******'])
+            open_new()
+        }
+
+        reload_waiting ++
+        if (reload_waiting >= 5) {
+            reload_waiting = 0
+        }
+    }
+}, random_interval(3, 5))
+
+// 检测无效对话框
+setInterval(function () {
+    let fake_dialog = search_fake_dialog()
+    if (fake_dialog) {
+        let rect = fake_dialog.getBoundingClientRect()
+        click_position(rect.x - 100 * Math.random(), rect.top - 100 * Math.random())
+    }
+}, random_interval(2, 3))
+
+// 点击Let's farm!
+let interval_start = setInterval(function () {
+    let farm_button = search_letsfarm()
+    if(farm_button) {
+        click_element(farm_button, false)
+        // 检查是否loading
+        let interval_loading = setInterval(function () {
+            let loading = is_loading()
+            farm_loading = loading
+            if (loading) {
                 // fake
-                custom_log(['****** 点击宝箱 ******'])
-
-                box_clicking = true
-                setTimeout(function () {
-                    click_element(box, false)
-                    box_clicking = false
-                    last_action_until = 0
-                }, random_interval(0.9, 3))
+                custom_log(['****** 加载中 ******'])
+            }else {
+                loading_success = true
+                clearInterval(interval_loading)
             }
+        }, random_interval(1, 2))
 
-            $('button').each(function (index_button, element_button) {
-                let button_text = $(element_button).text()
-                if(button_text){
-                    let re = RegExp('Close')
-                    if(button_text.match(re)){
-                        if (!box_close_clicking) {
-                            box_close_clicking = true
-                            setTimeout(function () {
-                                // fake
-                                custom_log(['****** 点击Close ******'])
+        clearInterval(interval_start)
+    }
+}, random_interval(2, 3))
 
-                                click_element(element_button, false)
-                                box_close_clicking = false
+// 检测find_goblin
+var intervalfind_goblin = setInterval(()=>{
+    let find_goblin_button = search_find_goblin()
+    if (find_goblin_button) {
+        finding_goblin = true
+        last_action_until = 0
+        setTimeout(function () {
+            click_element(find_goblin_button)
+            last_action_until = 0
+            // 寻找goblin
+            if (!catching_goblin) {
+                catching_goblin = true
+                var interval_catching = setInterval(function () {
+                    last_action_until = 0
+                    if (!farm_loading && !is_draging && !is_farming) {
+                        // fake
+                        console.log('****** 寻找小偷goblin ******')
+                        let stealing_goblin = search_stealing_goblin()
+                        if (stealing_goblin) {
+                            // fake
+                            console.log('****** 确定小偷goblin位置 ******')
+
+                            var last_goblin_rect = null
+                            var current_goblin_rect = null
+                            var invalid_move_count = 0
+                            let interval_draging = setInterval(function () {
                                 last_action_until = 0
-                            }, random_interval(0.5, 1))
+                                if (invalid_move_count >= 10) {
+                                    // 无法拖拽到安全位置范围，手动停止脚本
+                                    manual_stoping = true
+                                    finding_goblin = false
+                                    catching_goblin = false
+                                    clearInterval(interval_draging)
+                                }
+
+                                if (current_goblin_rect) {
+                                    last_goblin_rect = current_goblin_rect
+                                }
+                                current_goblin_rect = stealing_goblin.getBoundingClientRect()
+
+                                // 统计无效移动
+                                if (last_goblin_rect && current_goblin_rect) {
+                                    if (!is_valid_move(last_goblin_rect, current_goblin_rect)) {
+                                        invalid_move_count ++
+                                    }
+                                }
+
+                                let direction = drag_direction(current_goblin_rect, false)
+                                let direction_x = direction[0]
+                                let direction_y = direction[1]
+                                if (direction_x || direction_y) {
+                                    if (!manual_stoping) {
+                                        drag_to_farming(direction_x, direction_y)
+                                    }
+                                }else {
+                                    // 点击小偷goblin
+                                    click_element(stealing_goblin)
+                                    last_action_until = 0
+                                    // 准备点击continue
+                                    var interval_continue = setInterval(function () {
+                                        let continue_button = search_continue()
+                                        if (continue_button) {
+                                            click_element(continue_button)
+                                            finding_goblin = false
+                                            catching_goblin = false
+                                            last_action_until = 0
+                                            clearInterval(interval_continue)
+                                        }
+                                    }, random_interval(0.5, 1.5))
+                                    // 停止拖动
+                                    clearInterval(interval_draging)
+                                }
+                            }, random_interval(1, 2.5))
+
+                            clearInterval(interval_catching)
                         }
-                        return false
                     }
+                }, random_interval(1, 2))
+            }
+        }, random_interval(0.5, 1.5))
+    }
+}, random_interval(2, 3))
+
+// 检查农场编号
+if (!farm_open) {
+    let interval_id_checking = setInterval(function () {
+        let farm_id = search_farm_id()
+        if (farm_id) {
+            for (var i in approved_farm_ids) {
+                let approved_id = approved_farm_ids[i]
+                if (farm_id == approved_id) {
+                    farm_approved = true
+                    // fake
+                    console.log('****** 农场审核通过 ******')
+                    break
                 }
-            })
+            }
+            if (!farm_approved) {
+                // fake
+                console.log('****** 农场不合格 ******')
+            }
+            clearInterval(interval_id_checking)
         }else {
-            box_collecting = false
+            // fake
+            console.log('****** 无法确认农场 ******')
         }
     }, random_interval(1, 2))
+}else {
+    // fake
+    farm_approved = true
+    console.log('****** 对所有农场开放 ******')
+}
 
-    // 种植农作物
-    var interval_farming = setInterval(()=>{
-        if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved) {
-            let search_results = search_crops()
-            let crops_ready = search_results[0]
-            let crops_preparing = search_results[1]
-            let crops_none = search_results[2]
-
-            var available_crops_ready = []
-            var available_crops_preparing = []
-            var available_crops_none = []
-
-            // 未解锁土地范围
-            let locked_area = search_locked_farms_rect()
-
-            // 已成熟作物洞口
-            if(crops_ready.length){
-                for(var index in crops_ready){
-                    let element = crops_ready[index]
-                    let rect =  element.getBoundingClientRect()
-                    var is_locked = false
-                    if(locked_area){
-                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                            // 该洞口未解锁
-                            is_locked = true
-                        }
-                    }
-                    if(!is_locked) {
-                        available_crops_ready.push(element)
-                    }
-                }
-            }
+// 检查是否有种子
+setInterval(function () {
+    if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved) {
+        seed_adding = seed_needed()
+        if (seed_adding && !seed_processing) {
             // fake
-            // custom_log(['已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length])
+            custom_log(['****** 种子不够了！ ******'])
 
-            // 待成熟作物洞口
-            if(crops_preparing.length){
-                for(index in crops_preparing){
-                    let element = crops_preparing[index]
-                    let rect =  element.getBoundingClientRect()
-                    is_locked = false
-                    if(locked_area){
-                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                            // 该洞口未解锁
-                            is_locked = true
-                        }
-                    }
-                    if(!is_locked) {
-                        available_crops_preparing.push(element)
-                    }
+            // 切换种子
+            var bag = null
+            $('.w-8.mb-1').each(function (index, element) {
+                let alt = $(element).attr('alt')
+                if (alt == 'inventory') {
+                    // 找到了背包
+                    bag = element
+                    return false
                 }
-            }
-            // fake
-            // custom_log(['待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length])
+            })
 
-            // 未种植洞口
-            if(crops_none.length){
-                for(index in crops_none){
-                    let element = crops_none[index]
-                    let rect =  element.getBoundingClientRect()
-                    is_locked = false
-                    if(locked_area){
-                        if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
-                            // 该洞口未解锁
-                            is_locked = true
-                        }
-                    }
-                    if(!is_locked) {
-                        available_crops_none.push(element)
-                    }
-                }
-            }
-            // fake
-            // custom_log(['未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length])
+            if (bag) {
+                seed_processing = true
+                last_action_until = 0
+                setTimeout(function () {
+                    // fake
+                    custom_log(['****** 正在添加种子！ ******'])
 
-            if ((available_crops_ready.length || available_crops_none.length) && !box_collecting) {
-                // 调整农场位置
-                if(!is_draging & !is_farming) {
-                    is_draging = true
-
-                    let total_crops = available_crops_ready.concat(available_crops_none)
-                    let drag_interval = setInterval(function () {
-                        var direction_x = 0
-                        var direction_y = 0
-                        for (var i in total_crops) {
-                            let crop = total_crops[i]
-                            let crop_rect = crop.getBoundingClientRect()
-                            let direction = drag_direction(crop_rect, false)
-                            let dir_x = direction[0]
-                            let dir_y = direction[1]
-                            if (dir_x != 0) {
-                                direction_x = dir_x
-                            }
-                            if (dir_y != 0) {
-                                direction_y = dir_y
-                            }
-                        }
-                        if (direction_x || direction_y) {
-                            drag_to_farming(direction_x, direction_y)
-                        }else {
-                            // 收菜、种植
-                            var is_ready = false
-                            var crop = null
-                            if(available_crops_ready.length) {
-                                is_ready = true
-                                crop = available_crops_ready[0]
-                            }else if(available_crops_none.length) {
-                                crop = available_crops_none[0]
-                            }
-                            if(crop) {
-                                is_farming = true
-                                last_action_until = 0
-                                if (is_ready) {
-                                    custom_log(['****** 大丰收 ******'])
-                                }else {
-                                    custom_log(['****** 种植 ******'])
+                    click_element(bag)
+                    last_action_until = 0
+                    setTimeout(function () {
+                        // 搜索背包种子
+                        let seed_target = search_bag_seeds()
+                        if (seed_target) {
+                            // 选择种子
+                            click_element(seed_target)
+                            last_action_until = 0
+                            setTimeout(function () {
+                                // 结束切换种子
+                                let img_x = search_x()
+                                if (img_x) {
+                                    click_element(img_x)
+                                    seed_processing = false
+                                    last_action_until = 0
                                 }
-                                setTimeout(function () {
-                                    let click_rect = crop.getBoundingClientRect()
-                                    let click_position = new DOMPoint(click_rect.x+click_rect.width*Math.random()*0.9, click_rect.y+click_rect.height*Math.random()*0.9)
-                                    move_mouse(null, false, realtime_pos, click_position)
-                                    setTimeout(function () {
-                                        click_element(crop, is_ready)
-                                        last_action_until = 0
-                                        is_farming = false
-                                    }, 600)
-                                }, random_interval(0, 2))
-                            }
-
-                            is_draging = false
-                            clearInterval(drag_interval)
+                            }, random_interval(1, 2))
+                        }else {
+                            seed_processing = false
+                            // 没有种子停止种植
+                            manual_stoping = true
                         }
-                    }, 600)
+                    }, random_interval(1, 2))
+                }, random_interval(2, 3))
+            }
+        }
+    }
+}, 2000)
+
+// 检查是否有宝箱掉落
+setInterval(function () {
+    // 搜寻宝箱
+    let box_result = search_box()
+    let droped = box_result[0]
+    let box = box_result[1]
+    if (droped) {
+        // fake
+        custom_log(['****** 宝箱掉落 ******'])
+
+        last_action_until = 0
+        box_collecting = true
+        if (box && !box_clicking) {
+            // 点击宝箱
+            // fake
+            custom_log(['****** 点击宝箱 ******'])
+
+            box_clicking = true
+            setTimeout(function () {
+                click_element(box, false)
+                box_clicking = false
+                last_action_until = 0
+            }, random_interval(0.9, 3))
+        }
+
+        $('button').each(function (index_button, element_button) {
+            let button_text = $(element_button).text()
+            if(button_text){
+                let re = RegExp('Close')
+                if(button_text.match(re)){
+                    if (!box_close_clicking) {
+                        box_close_clicking = true
+                        setTimeout(function () {
+                            // fake
+                            custom_log(['****** 点击Close ******'])
+
+                            click_element(element_button, false)
+                            box_close_clicking = false
+                            last_action_until = 0
+                        }, random_interval(0.5, 1))
+                    }
+                    return false
+                }
+            }
+        })
+    }else {
+        box_collecting = false
+    }
+}, random_interval(1, 2))
+
+// 种植农作物
+var interval_farming = setInterval(()=>{
+    if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved) {
+        let search_results = search_crops()
+        let crops_ready = search_results[0]
+        let crops_preparing = search_results[1]
+        let crops_none = search_results[2]
+
+        var available_crops_ready = []
+        var available_crops_preparing = []
+        var available_crops_none = []
+
+        // 未解锁土地范围
+        let locked_area = search_locked_farms_rect()
+
+        // 已成熟作物洞口
+        if(crops_ready.length){
+            for(var index in crops_ready){
+                let element = crops_ready[index]
+                let rect =  element.getBoundingClientRect()
+                var is_locked = false
+                if(locked_area){
+                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                        // 该洞口未解锁
+                        is_locked = true
+                    }
+                }
+                if(!is_locked) {
+                    available_crops_ready.push(element)
                 }
             }
         }
-    }, 500)
-})()
+        // fake
+        // custom_log(['已成熟作物洞口数量：', crops_ready.length, '可用：', available_crops_ready.length])
+
+        // 待成熟作物洞口
+        if(crops_preparing.length){
+            for(index in crops_preparing){
+                let element = crops_preparing[index]
+                let rect =  element.getBoundingClientRect()
+                is_locked = false
+                if(locked_area){
+                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                        // 该洞口未解锁
+                        is_locked = true
+                    }
+                }
+                if(!is_locked) {
+                    available_crops_preparing.push(element)
+                }
+            }
+        }
+        // fake
+        // custom_log(['待成熟作物洞口数量：', crops_preparing.length, '可用：', available_crops_preparing.length])
+
+        // 未种植洞口
+        if(crops_none.length){
+            for(index in crops_none){
+                let element = crops_none[index]
+                let rect =  element.getBoundingClientRect()
+                is_locked = false
+                if(locked_area){
+                    if((rect.left >= locked_area.left) & (rect.left+rect.width <= locked_area.left+locked_area.width) & (rect.top >= locked_area.top) & (rect.top+rect.height <= locked_area.top+locked_area.height)) {
+                        // 该洞口未解锁
+                        is_locked = true
+                    }
+                }
+                if(!is_locked) {
+                    available_crops_none.push(element)
+                }
+            }
+        }
+        // fake
+        // custom_log(['未种植洞口数量：', crops_none.length, '可用：', available_crops_none.length])
+
+        if ((available_crops_ready.length || available_crops_none.length) && !box_collecting) {
+            // 调整农场位置
+            if(!is_draging & !is_farming) {
+                is_draging = true
+
+                let total_crops = available_crops_ready.concat(available_crops_none)
+                let drag_interval = setInterval(function () {
+                    var direction_x = 0
+                    var direction_y = 0
+                    for (var i in total_crops) {
+                        let crop = total_crops[i]
+                        let crop_rect = crop.getBoundingClientRect()
+                        let direction = drag_direction(crop_rect, false)
+                        let dir_x = direction[0]
+                        let dir_y = direction[1]
+                        if (dir_x != 0) {
+                            direction_x = dir_x
+                        }
+                        if (dir_y != 0) {
+                            direction_y = dir_y
+                        }
+                    }
+                    if (direction_x || direction_y) {
+                        drag_to_farming(direction_x, direction_y)
+                    }else {
+                        // 收菜、种植
+                        var is_ready = false
+                        var crop = null
+                        if(available_crops_ready.length) {
+                            is_ready = true
+                            crop = available_crops_ready[0]
+                        }else if(available_crops_none.length) {
+                            crop = available_crops_none[0]
+                        }
+                        if(crop) {
+                            is_farming = true
+                            last_action_until = 0
+                            if (is_ready) {
+                                custom_log(['****** 大丰收 ******'])
+                            }else {
+                                custom_log(['****** 种植 ******'])
+                            }
+                            setTimeout(function () {
+                                let click_rect = crop.getBoundingClientRect()
+                                let click_position = new DOMPoint(click_rect.x+click_rect.width*Math.random()*0.9, click_rect.y+click_rect.height*Math.random()*0.9)
+                                move_mouse(null, false, realtime_pos, click_position)
+                                setTimeout(function () {
+                                    click_element(crop, is_ready)
+                                    last_action_until = 0
+                                    is_farming = false
+                                }, 600)
+                            }, random_interval(0, 2))
+                        }
+
+                        is_draging = false
+                        clearInterval(drag_interval)
+                    }
+                }, 600)
+            }
+        }
+    }
+}, 500)
 
 // ================ 工具 =====================
 // 根据元素坐标获取拖动方向，使元素处于合适的位置
