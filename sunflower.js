@@ -8,6 +8,7 @@
 // @match        https://sunflower-land.com/play*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @require      https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js
+// @run-at       document-start
 // ==/UserScript==
 
 var loading_waiting_time = 120
