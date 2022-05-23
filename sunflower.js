@@ -45,6 +45,8 @@ var finding_goblin = false
 var catching_goblin = false
 var farm_approved = false
 var last_action_until = 0
+var seed_shopping_need = false
+var is_shopping = false
 
 let farm_open = true
 let approved_farm_ids = ['']
@@ -111,12 +113,12 @@ document.addEventListener("click", function (ev){
         }
     }
 
-    // custom_log(['\n'])
-    // custom_log(['click!'])
-    // console.log(element)
-    // custom_log(['横坐标：'+clientX])
-    // custom_log(['纵坐标：'+clientY])
-    // custom_log(['\n'])
+    custom_log(['\n'])
+    custom_log(['click!'])
+    console.log(element)
+    custom_log(['横坐标：'+clientX])
+    custom_log(['纵坐标：'+clientY])
+    custom_log(['\n'])
 })
 
 // 记录实时鼠标位置
@@ -327,26 +329,79 @@ setInterval(function () {
                             // 选择种子
                             click_element(seed_target)
                             last_action_until = 0
-                            setTimeout(function () {
-                                // 结束切换种子
-                                let img_x = search_x()
-                                if (img_x) {
-                                    click_element(img_x)
-                                    seed_processing = false
-                                    last_action_until = 0
-                                }
-                            }, random_interval(1, 2))
-                        }else {
-                            seed_processing = false
-                            // 没有种子停止种植
-                            manual_stoping = true
                         }
+
+                        // 关掉背包
+                        setTimeout(function () {
+                            let img_x = search_x()
+                            if (img_x) {
+                                click_element(img_x)
+                                seed_processing = false
+                                last_action_until = 0
+
+                                if (!seed_target) {
+                                    // 没有种子，去商店购买
+                                    seed_shopping_need = true
+                                }
+                            }
+                        }, random_interval(1, 2))
                     }, random_interval(1, 2))
                 }, random_interval(2, 3))
             }
         }
     }
 }, 2000)
+
+// 购买种子
+setInterval(function () {
+    if (!seed_shopping_need && !is_shopping && !farm_loading && !is_draging && !is_farming) {
+        let shop = search_shop()
+        if (shop) {
+            is_shopping = true
+            let interval_shop_draging = setInterval(function () {
+                last_action_until = 0
+
+                let shop_rect = shop.getBoundingClientRect()
+                let direction = drag_direction(shop_rect, false)
+                let direction_x = direction[0]
+                let direction_y = direction[1]
+                if (direction_x || direction_y) {
+                    if (!manual_stoping) {
+                        drag_to_farming(direction_x, direction_y)
+                    }
+                }else {
+                    // fake
+                    console.log('****** 点击商店 ******')
+                    // 点击shop
+                    click_element(shop)
+                    last_action_until = 0
+                    // 购买种子
+                    var interval_buying = setInterval(function () {
+                        $('div').each(function (index, element) {
+                            let class_name = $(element).attr('class')
+                            if (class_name == 'w-3/5 flex flex-wrap h-fit') {
+                                let shop_seeds_bar = element
+                                let seeds = $(shop_seeds_bar).find('div div img')
+                                $(seeds).each(function (seed_i, seed) {
+                                    let seed_src = $(seed).attr('src')
+                                    let seed_re = /04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC/
+                                    if (seed_src.match(re)) {
+                                        // 向日葵
+                                        console.log('****** 找到向日葵种子 ******')
+                                        clearInterval(interval_buying)
+                                    }
+                                })
+                                return false
+                            }
+                        })
+                    }, random_interval(0.5, 1.5))
+                    // 停止拖动
+                    clearInterval(interval_shop_draging)
+                }
+            }, random_interval(0.5, 1.5))
+        }
+    }
+}, random_interval(2, 3))
 
 // 检查是否有宝箱掉落
 setInterval(function () {
@@ -616,6 +671,10 @@ function move_mouse(target, drag, from_point, to_point){
         return false
     }
     target = target || document.elementFromPoint(from_point.x, from_point.y)
+    if (!target) {
+        return false
+    }
+
     var from_x = from_point.x
     var from_y = from_point.y
     // 移动到初始位置
@@ -1265,4 +1324,18 @@ function is_valid_move(rect_1, rect_2) {
     }else {
         return true
     }
+}
+
+// 搜寻商店
+function search_shop() {
+    var shop = null
+    $('.w-full').each(function (index, element) {
+        let alt = $(element).attr('alt')
+        if (alt == 'shop') {
+            // 找到了
+            shop = element
+            return false
+        }
+    })
+    return shop
 }
