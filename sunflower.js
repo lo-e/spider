@@ -296,7 +296,7 @@ if (!farm_open) {
 
 // 检查是否有种子
 setInterval(function () {
-    if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved) {
+    if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved && !seed_shopping_need) {
         seed_adding = seed_needed()
         if (seed_adding && !seed_processing) {
             // fake
@@ -354,7 +354,7 @@ setInterval(function () {
 
 // 购买种子
 setInterval(function () {
-    if (!seed_shopping_need && !is_shopping && !farm_loading && !is_draging && !is_farming) {
+    if (seed_shopping_need && !is_shopping && !farm_loading && !is_draging && !is_farming) {
         let shop = search_shop()
         if (shop) {
             is_shopping = true
@@ -376,21 +376,57 @@ setInterval(function () {
                     click_element(shop)
                     last_action_until = 0
                     // 购买种子
+                    let target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
+                                           'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
+                                           'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII']
                     var interval_buying = setInterval(function () {
                         $('div').each(function (index, element) {
                             let class_name = $(element).attr('class')
                             if (class_name == 'w-3/5 flex flex-wrap h-fit') {
+                                // 找到商店种子区域
                                 let shop_seeds_bar = element
                                 let seeds = $(shop_seeds_bar).find('div div img')
+                                var target_seeds = []
                                 $(seeds).each(function (seed_i, seed) {
                                     let seed_src = $(seed).attr('src')
-                                    let seed_re = /04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC/
-                                    if (seed_src.match(re)) {
-                                        // 向日葵
-                                        console.log('****** 找到向日葵种子 ******')
-                                        clearInterval(interval_buying)
+                                    for (var i in target_seeds_re) {
+                                        let seed_re = RegExp(target_seeds_re[i])
+                                        if (seed_src.match(seed_re)) {
+                                            target_seeds.push(seed)
+                                            break
+                                        }
                                     }
                                 })
+
+                                // 购买所有目标种子
+                                var perchased = false
+                                let interval_processing = setInterval(function () {
+                                    if (target_seeds.length) {
+                                        let seed = target_seeds[0]
+                                        click_element(seed)
+                                        perchased = false
+                                        target_seeds.shift(seed)
+                                    }else {
+                                        if (perchased) {
+                                            // 有真实购买
+                                            let img_x = search_x()
+                                            if (img_x) {
+                                                click_element(img_x)
+                                            }
+                                            // fake
+                                            console.log('****** 购买完成! ******')
+                                        }else {
+                                            // fake
+                                            console.log('****** 未购买! ******')
+                                            manual_stoping = true
+                                        }
+                                        is_shopping = false
+                                        seed_shopping_need = false
+                                        clearInterval(interval_processing)
+                                    }
+                                }, random_interval(1, 2))
+
+                                clearInterval(interval_buying)
                                 return false
                             }
                         })
@@ -455,7 +491,7 @@ setInterval(function () {
 
 // 种植农作物
 var interval_farming = setInterval(()=>{
-    if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved) {
+    if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved && !seed_shopping_need) {
         let search_results = search_crops()
         let crops_ready = search_results[0]
         let crops_preparing = search_results[1]
