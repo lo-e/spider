@@ -66,7 +66,7 @@ setInterval(function () {
 
     let time_dic = utc_zone_time(8)
     let hour = time_dic['hour']
-    if (hour >= 8 && hour <= 23) {
+    if (hour >= 10 && hour <= 23) {
         // 等待保存完成
         var waiting_count = 0
         let interval_waiting = setInterval(function () {
