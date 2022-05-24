@@ -102,7 +102,7 @@ document.addEventListener("click", function (ev){
     if(element_text){
         if(element_text == 'Menu'){
             // 结束种植
-            manual_stoping = !manual_stoping
+            manual_stoping = manual_stop(!manual_stoping)
             // fake
             custom_log(['****** click text:', element_text, '******'])
             if (manual_stoping) {
@@ -113,12 +113,12 @@ document.addEventListener("click", function (ev){
         }
     }
 
-    custom_log(['\n'])
-    custom_log(['click!'])
-    console.log(element)
-    custom_log(['横坐标：'+clientX])
-    custom_log(['纵坐标：'+clientY])
-    custom_log(['\n'])
+    // custom_log(['\n'])
+    // custom_log(['click!'])
+    // console.log(element)
+    // custom_log(['横坐标：'+clientX])
+    // custom_log(['纵坐标：'+clientY])
+    // custom_log(['\n'])
 })
 
 // 记录实时鼠标位置
@@ -210,7 +210,7 @@ var intervalfind_goblin = setInterval(()=>{
                                 last_action_until = 0
                                 if (invalid_move_count >= 10) {
                                     // 无法拖拽到安全位置范围，手动停止脚本
-                                    manual_stoping = true
+                                    manual_stoping = manual_stop(true)
                                     finding_goblin = false
                                     catching_goblin = false
                                     clearInterval(interval_draging)
@@ -354,7 +354,7 @@ setInterval(function () {
 
 // 购买种子
 setInterval(function () {
-    if (seed_shopping_need && !is_shopping && !farm_loading && !is_draging && !is_farming) {
+    if (seed_shopping_need && !is_shopping && !farm_loading && !is_draging && !is_farming && !manual_stoping) {
         let shop = search_shop()
         if (shop) {
             is_shopping = true
@@ -400,29 +400,43 @@ setInterval(function () {
 
                                 // 购买所有目标种子
                                 var perchased = false
+                                var processing = false
                                 let interval_processing = setInterval(function () {
-                                    if (target_seeds.length) {
-                                        let seed = target_seeds[0]
-                                        click_element(seed)
-                                        perchased = false
-                                        target_seeds.shift(seed)
-                                    }else {
-                                        if (perchased) {
-                                            // 有真实购买
-                                            let img_x = search_x()
-                                            if (img_x) {
-                                                click_element(img_x)
-                                            }
-                                            // fake
-                                            console.log('****** 购买完成! ******')
+                                    if (!processing) {
+                                        if (target_seeds.length) {
+                                            let seed = target_seeds[0]
+                                            click_element(seed)
+                                            processing = true
+                                            let interval_perchase = setInterval(function () {
+                                                let buy_10 = search_buy_10()
+                                                if (buy_10) {
+                                                    click_element(buy_10)
+                                                    perchased = true
+                                                }else {
+                                                    clearInterval(interval_perchase)
+                                                    processing = false
+                                                }
+                                            }, random_interval(0.5, 1))
+
+                                            target_seeds.shift(seed)
                                         }else {
-                                            // fake
-                                            console.log('****** 未购买! ******')
-                                            manual_stoping = true
+                                            if (perchased) {
+                                                // 有真实购买
+                                                let img_x = search_x()
+                                                if (img_x) {
+                                                    click_element(img_x)
+                                                }
+                                                // fake
+                                                console.log('****** 购买完成! ******')
+                                            }else {
+                                                // fake
+                                                console.log('****** 未购买! ******')
+                                                manual_stoping = manual_stop(true)
+                                            }
+                                            is_shopping = false
+                                            seed_shopping_need = false
+                                            clearInterval(interval_processing)
                                         }
-                                        is_shopping = false
-                                        seed_shopping_need = false
-                                        clearInterval(interval_processing)
                                     }
                                 }, random_interval(1, 2))
 
@@ -1374,4 +1388,27 @@ function search_shop() {
         }
     })
     return shop
+}
+
+// 搜寻buy 10
+function search_buy_10() {
+    var buy_10 = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Buy 10') {
+            buy_10 = element
+            return false
+        }
+    })
+    return buy_10
+}
+
+// 开启、停止
+function manual_stop(stop) {
+    if (stop) {
+        custom_log(['手动停止'])
+    }else {
+        custom_log(['手动开启'])
+    }
+    return stop
 }
