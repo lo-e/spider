@@ -87,7 +87,7 @@ setInterval(function () {
             }
         }, random_interval(1, 2))
     }
-}, 60 * 60 * 1000)
+}, 6 * 60 * 60 * 1000)
 
 // 监听点击
 document.addEventListener("click", function (ev){
@@ -375,76 +375,163 @@ setInterval(function () {
                     // 点击shop
                     click_element(shop)
                     last_action_until = 0
+
+                    // 先卖出作物
+                    var selling = true
+                    $('.text-sm.text-shadow').each(function (index, element) {
+                        let text = $(element).text()
+                        if (text == 'Sell') {
+                            setTimeout(function () {
+                                // 点击Sell
+                                click_element(element)
+                                var interval_selling = setInterval(function () {
+                                    $('div').each(function (index, element) {
+                                        let class_name = $(element).attr('class')
+                                        if (class_name == 'w-3/5 flex flex-wrap h-fit') {
+                                            // 找到商店种子区域
+                                            let shop_crops_bar = element
+                                            let crops = $(shop_crops_bar).find('div div img')
+                                            var target_crops = []
+                                            $(crops).each(function (i_crop, crop) {
+                                                let crop_bros = $(crop).nextAll()
+                                                if (crop_bros.length) {
+                                                    target_crops.push(crop)
+                                                }
+                                            })
+                                            // fake
+                                            console.log('****** 共有', target_crops.length, '种作物可以售出 ******')
+
+                                            // 遍历售出所有作物
+                                            var processing = false
+                                            let interval_sell_processing = setInterval(function () {
+                                                if (!processing) {
+                                                    if (target_crops.length) {
+                                                        let crop = target_crops[0]
+                                                        click_element(crop)
+                                                        processing = true
+                                                        var confirminig = false
+                                                        let interval_sell_all = setInterval(function () {
+                                                            if (!confirminig) {
+                                                                let sell_all = search_sell_all()
+                                                                if (sell_all) {
+                                                                    confirminig = true
+                                                                    click_element(sell_all)
+                                                                    let interval_confirm = setInterval(function () {
+                                                                        let sell_confirm = search_sell_confirm()
+                                                                        if (sell_confirm) {
+                                                                            click_element(sell_confirm)
+                                                                            clearInterval(interval_confirm)
+                                                                            confirminig = false
+                                                                        }
+                                                                    }, random_interval(0.5, 1.0))
+                                                                }else {
+                                                                    clearInterval(interval_sell_all)
+                                                                    processing = false
+                                                                }
+                                                            }
+                                                        }, random_interval(0.5, 1))
+
+                                                        target_crops.shift(crop)
+                                                    }else {
+                                                        // fake
+                                                        console.log('****** 作物已全部卖出! ******')
+                                                        clearInterval(interval_sell_processing)
+                                                        selling = false
+                                                    }
+                                                }
+                                            }, random_interval(1, 2))
+
+                                            clearInterval(interval_selling)
+                                            return false
+                                        }
+                                    })
+                                }, random_interval(0.5, 1.5))
+                            }, random_interval(0.5, 1.0))
+                        }
+                    })
+
                     // 购买种子
-                    let target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
-                                           'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
-                                           'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII']
-                    var interval_buying = setInterval(function () {
-                        $('div').each(function (index, element) {
-                            let class_name = $(element).attr('class')
-                            if (class_name == 'w-3/5 flex flex-wrap h-fit') {
-                                // 找到商店种子区域
-                                let shop_seeds_bar = element
-                                let seeds = $(shop_seeds_bar).find('div div img')
-                                var target_seeds = []
-                                $(seeds).each(function (seed_i, seed) {
-                                    let seed_src = $(seed).attr('src')
-                                    for (var i in target_seeds_re) {
-                                        let seed_re = RegExp(target_seeds_re[i])
-                                        if (seed_src.match(seed_re)) {
-                                            target_seeds.push(seed)
-                                            break
-                                        }
-                                    }
-                                })
+                    let interval_waiting_selling = setInterval(function () {
+                        if (!selling) {
+                            $('.text-sm.text-shadow').each(function (index, element) {
+                                let text = $(element).text()
+                                if (text == 'Buy') {
+                                    // 点击Buy
+                                    click_element(element)
+                                    let target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
+                                                           'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
+                                                           'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII']
+                                    var interval_buying = setInterval(function () {
+                                        $('div').each(function (index, element) {
+                                            let class_name = $(element).attr('class')
+                                            if (class_name == 'w-3/5 flex flex-wrap h-fit') {
+                                                // 找到商店种子区域
+                                                let shop_seeds_bar = element
+                                                let seeds = $(shop_seeds_bar).find('div div img')
+                                                var target_seeds = []
+                                                $(seeds).each(function (seed_i, seed) {
+                                                    let seed_src = $(seed).attr('src')
+                                                    for (var i in target_seeds_re) {
+                                                        let seed_re = RegExp(target_seeds_re[i])
+                                                        if (seed_src.match(seed_re)) {
+                                                            target_seeds.push(seed)
+                                                            break
+                                                        }
+                                                    }
+                                                })
 
-                                // 购买所有目标种子
-                                var perchased = false
-                                var processing = false
-                                let interval_processing = setInterval(function () {
-                                    if (!processing) {
-                                        if (target_seeds.length) {
-                                            let seed = target_seeds[0]
-                                            click_element(seed)
-                                            processing = true
-                                            let interval_perchase = setInterval(function () {
-                                                let buy_10 = search_buy_10()
-                                                if (buy_10) {
-                                                    click_element(buy_10)
-                                                    perchased = true
-                                                }else {
-                                                    clearInterval(interval_perchase)
-                                                    processing = false
-                                                }
-                                            }, random_interval(0.5, 1))
+                                                // 购买所有目标种子
+                                                var perchased = false
+                                                var processing = false
+                                                let interval_processing = setInterval(function () {
+                                                    if (!processing) {
+                                                        if (target_seeds.length) {
+                                                            let seed = target_seeds[0]
+                                                            click_element(seed)
+                                                            processing = true
+                                                            let interval_perchase = setInterval(function () {
+                                                                let buy_10 = search_buy_10()
+                                                                if (buy_10) {
+                                                                    click_element(buy_10)
+                                                                    perchased = true
+                                                                }else {
+                                                                    clearInterval(interval_perchase)
+                                                                    processing = false
+                                                                }
+                                                            }, random_interval(0.5, 1))
 
-                                            target_seeds.shift(seed)
-                                        }else {
-                                            if (perchased) {
-                                                // 有真实购买
-                                                let img_x = search_x()
-                                                if (img_x) {
-                                                    click_element(img_x)
-                                                }
-                                                // fake
-                                                console.log('****** 购买完成! ******')
-                                            }else {
-                                                // fake
-                                                console.log('****** 未购买! ******')
-                                                manual_stoping = manual_stop(true)
+                                                            target_seeds.shift(seed)
+                                                        }else {
+                                                            if (perchased) {
+                                                                // 有真实购买
+                                                                let img_x = search_x()
+                                                                if (img_x) {
+                                                                    click_element(img_x)
+                                                                }
+                                                                // fake
+                                                                console.log('****** 购买完成! ******')
+                                                            }else {
+                                                                // fake
+                                                                console.log('****** 未购买! ******')
+                                                                manual_stoping = manual_stop(true)
+                                                            }
+                                                            is_shopping = false
+                                                            seed_shopping_need = false
+                                                            clearInterval(interval_processing)
+                                                        }
+                                                    }
+                                                }, random_interval(1, 2))
+
+                                                clearInterval(interval_buying)
+                                                return false
                                             }
-                                            is_shopping = false
-                                            seed_shopping_need = false
-                                            clearInterval(interval_processing)
-                                        }
-                                    }
-                                }, random_interval(1, 2))
-
-                                clearInterval(interval_buying)
-                                return false
-                            }
-                        })
-                    }, random_interval(0.5, 1.5))
+                                        })
+                                    }, random_interval(0.5, 1.5))
+                                }
+                            })
+                            clearInterval(interval_waiting_selling)
+                        }
+                    }, 1000)
                     // 停止拖动
                     clearInterval(interval_shop_draging)
                 }
@@ -1396,11 +1483,43 @@ function search_buy_10() {
     $('button').each(function (index, element) {
         let text = $(element).text()
         if (text == 'Buy 10') {
-            buy_10 = element
+            let disabled = $(element).attr('disabled')
+            if (disabled == null) {
+                buy_10 = element
+            }
             return false
         }
     })
     return buy_10
+}
+
+// 搜寻sell all
+function search_sell_all() {
+    var sell_all = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Sell All') {
+            let disabled = $(element).attr('disabled')
+            if (disabled == null) {
+                sell_all = element
+            }
+            return false
+        }
+    })
+    return sell_all
+}
+
+// 搜寻卖出确认
+function search_sell_confirm() {
+    var sell_confirm = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Yes') {
+            sell_confirm = element
+            return false
+        }
+    })
+    return sell_confirm
 }
 
 // 开启、停止
