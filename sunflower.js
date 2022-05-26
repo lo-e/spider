@@ -57,37 +57,37 @@ if (location.href == 'https://sunflower-land.com/') {
 }
 
 // 每隔一段时间保存资源，打开新页面，并且关闭当前页面
-setInterval(function () {
-    let save_ = search_save_btn()
-    if (save_) {
-        // 点击保存
-        click_element(save_)
-    }
-
-    let time_dic = utc_zone_time(8)
-    let hour = time_dic['hour']
-    if (hour >= 10 && hour <= 23) {
-        // 等待保存完成
-        var waiting_count = 0
-        let interval_waiting = setInterval(function () {
-            waiting_count ++
-            let waiting_save = search_save_btn()
-            if (waiting_save && !manual_stoping) {
-                last_action_until ++
-                if (last_action_until == 60) {
-                    click_element(save_)
-                }
-                if (last_action_until > 60) {
-                    clearInterval(interval_waiting)
-                    open_new()
-                }
-            }else if (waiting_count >= 10*60) {
-                waiting_count = 0
-                clearInterval(interval_waiting)
-            }
-        }, random_interval(1, 2))
-    }
-}, 6 * 60 * 60 * 1000)
+// setInterval(function () {
+//     let save_ = search_save_btn()
+//     if (save_) {
+//         // 点击保存
+//         click_element(save_)
+//     }
+//
+//     let time_dic = utc_zone_time(8)
+//     let hour = time_dic['hour']
+//     if (hour >= 10 && hour <= 23) {
+//         // 等待保存完成
+//         var waiting_count = 0
+//         let interval_waiting = setInterval(function () {
+//             waiting_count ++
+//             let waiting_save = search_save_btn()
+//             if (waiting_save && !manual_stoping) {
+//                 last_action_until ++
+//                 if (last_action_until == 60) {
+//                     click_element(save_)
+//                 }
+//                 if (last_action_until > 60) {
+//                     clearInterval(interval_waiting)
+//                     open_new()
+//                 }
+//             }else if (waiting_count >= 10*60) {
+//                 waiting_count = 0
+//                 clearInterval(interval_waiting)
+//             }
+//         }, random_interval(1, 2))
+//     }
+// }, 6 * 60 * 60 * 1000)
 
 // 监听点击
 document.addEventListener("click", function (ev){
@@ -160,26 +160,31 @@ setInterval(function () {
 }, random_interval(2, 3))
 
 // 点击Let's farm!
+var click_let = false
 let interval_start = setInterval(function () {
     let farm_button = search_letsfarm()
     if(farm_button) {
-        click_element(farm_button, false)
         // 检查是否loading
-        let interval_loading = setInterval(function () {
-            let loading = is_loading()
-            farm_loading = loading
-            if (loading) {
-                // fake
-                custom_log(['****** 加载中 ******'])
-            }else {
-                loading_success = true
-                clearInterval(interval_loading)
-            }
-        }, random_interval(1, 2))
-
+        if (!click_let) {
+            var loading_start = false
+            let interval_loading = setInterval(function () {
+                farm_loading = is_loading()
+                if (farm_loading) {
+                    loading_start = true
+                    // fake
+                    custom_log(['****** 加载中 ******'])
+                }else if (loading_start) {
+                    loading_success = true
+                    clearInterval(interval_loading)
+                }
+            }, random_interval(1, 2))
+        }
+        click_element(farm_button, false)
+        click_let = true
+    }else if (click_let) {
         clearInterval(interval_start)
     }
-}, random_interval(2, 3))
+}, random_interval(1, 2))
 
 // 检测find_goblin
 var intervalfind_goblin = setInterval(()=>{
@@ -416,13 +421,12 @@ setInterval(function () {
                                                                 if (sell_all) {
                                                                     confirminig = true
                                                                     click_element(sell_all)
-                                                                    let interval_confirm = setInterval(function () {
+                                                                    setTimeout(function () {
                                                                         let sell_confirm = search_sell_confirm()
                                                                         if (sell_confirm) {
                                                                             click_element(sell_confirm)
-                                                                            clearInterval(interval_confirm)
-                                                                            confirminig = false
                                                                         }
+                                                                        confirminig = false
                                                                     }, random_interval(0.5, 1.0))
                                                                 }else {
                                                                     clearInterval(interval_sell_all)
