@@ -50,6 +50,7 @@ var is_shopping = false
 
 let farm_open = true
 let approved_farm_ids = ['']
+var this_farm_id = ''
 
 if (location.href == 'https://sunflower-land.com/') {
     open_new()
@@ -270,10 +271,18 @@ var intervalfind_goblin = setInterval(()=>{
 }, random_interval(2, 3))
 
 // 检查农场编号
-if (!farm_open) {
-    let interval_id_checking = setInterval(function () {
-        let farm_id = search_farm_id()
-        if (farm_id) {
+if (farm_open) {
+    // fake
+    farm_approved = true
+    console.log('****** 对所有农场开放 ******')
+}
+let interval_id_checking = setInterval(function () {
+    let farm_id = search_farm_id()
+    if (farm_id) {
+        this_farm_id = farm_id
+        // fake
+        console.log('****** farm_id：', this_farm_id, ' ******')
+        if (!farm_open) {
             for (var i in approved_farm_ids) {
                 let approved_id = approved_farm_ids[i]
                 if (farm_id == approved_id) {
@@ -287,17 +296,13 @@ if (!farm_open) {
                 // fake
                 console.log('****** 农场不合格 ******')
             }
-            clearInterval(interval_id_checking)
-        }else {
-            // fake
-            console.log('****** 无法确认农场 ******')
         }
-    }, random_interval(1, 2))
-}else {
-    // fake
-    farm_approved = true
-    console.log('****** 对所有农场开放 ******')
-}
+        clearInterval(interval_id_checking)
+    }else {
+        // fake
+        console.log('****** 无法确认农场 ******')
+    }
+}, random_interval(1, 2))
 
 // 检查是否有种子
 setInterval(function () {
@@ -465,6 +470,15 @@ setInterval(function () {
                                     let target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
                                                            'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
                                                            'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII']
+                                    // 兔子农场种植胡萝卜
+                                    let rabbit_farms = ['84194', '89397', '88920']
+                                    for (var i_farm in rabbit_farms) {
+                                        let farm_id = rabbit_farms[i_farm]
+                                        if (farm_id == this_farm_id) {
+                                            target_seeds_re.push('JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg')
+                                            break
+                                        }
+                                    }
                                     var interval_buying = setInterval(function () {
                                         $('div').each(function (index, element) {
                                             let class_name = $(element).attr('class')
@@ -1424,7 +1438,7 @@ function search_farm_id() {
     var farm_id = ''
     $('.text-sm').each(function (index, element) {
         let text = $(element).text()
-        let re = /Farm #/
+        let re = /Land #/
         if(text && text.match(re)) {
             // 找到了
             farm_id = text.replace(re, '')
