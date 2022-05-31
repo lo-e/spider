@@ -512,7 +512,7 @@ setInterval(function () {
                                     for (var i_farm in rabbit_farms) {
                                         let farm_id = rabbit_farms[i_farm]
                                         if (farm_id == this_farm_id) {
-                                            target_seeds_re.unshift('JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg')
+                                            target_seeds_re.push('JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg')
                                             break
                                         }
                                     }
