@@ -97,9 +97,9 @@ document.addEventListener("click", function (ev){
     let clientY = oev.clientY
 
     let element = ev.srcElement
-    let element_text = $(element).text()
 
     // 点击Menu停止/开启种植
+    let element_text = $(element).text()
     if(element_text){
         if(element_text == 'Menu'){
             // 结束种植
@@ -113,6 +113,42 @@ document.addEventListener("click", function (ev){
             }
         }
     }
+
+    // 点击SFL向日葵
+    let element_class = $(element).attr('class')
+    if (element_class == 'w-8 img-highlight') {
+        // 手动停止
+        manual_stoping = manual_stop(true)
+        // 点击商店
+        var interval_click_to_shop = setInterval(function () {
+            let shop = search_shop()
+            if (shop) {
+                let interval_click_shop_draging = setInterval(function () {
+                    last_action_until = 0
+
+                    let shop_rect = shop.getBoundingClientRect()
+                    let direction = drag_direction(shop_rect, false)
+                    let direction_x = direction[0]
+                    let direction_y = direction[1]
+                    if (direction_x || direction_y) {
+                        if (!manual_stoping) {
+                            drag_to_farming(direction_x, direction_y)
+                        }
+                    } else {
+                        // fake
+                        console.log('****** 点击商店 ******')
+                        // 点击shop
+                        click_element(shop)
+                        last_action_until = 0
+                        
+                        clearInterval(interval_click_shop_draging)
+                    }
+                }, random_interval(0.5, 1.5))
+                clearInterval(interval_click_to_shop)
+            }
+        }, random_interval(1, 1.5))
+    }
+
 
     // custom_log(['\n'])
     // custom_log(['click!'])
