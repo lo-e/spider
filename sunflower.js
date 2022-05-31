@@ -39,6 +39,7 @@ var box_collecting = false
 var box_clicking = false
 var box_close_clicking = false
 var seed_adding = false
+var seed_selecting = false
 var seed_processing = false
 var farm_loading = true
 var finding_goblin = false
@@ -345,7 +346,7 @@ let interval_id_checking = setInterval(function () {
 setInterval(function () {
     if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved && !seed_shopping_need) {
         seed_adding = seed_needed()
-        if (seed_adding && !seed_processing) {
+        if ((seed_adding || seed_selecting) && !seed_processing) {
             // fake
             custom_log(['****** 种子不够了！ ******'])
 
@@ -385,6 +386,7 @@ setInterval(function () {
                                 click_element(img_x)
                                 seed_processing = false
                                 last_action_until = 0
+                                seed_selecting = false
 
                                 if (!seed_target) {
                                     // 没有种子，去商店购买
@@ -609,6 +611,10 @@ setInterval(function () {
                                                                 if (img_x) {
                                                                     click_element(img_x)
                                                                 }
+
+                                                                // 按顺序重新选择种子
+                                                                seed_selecting = true
+
                                                                 // fake
                                                                 console.log('****** 购买完成! ******')
                                                             }else {
@@ -693,7 +699,7 @@ setInterval(function () {
 
 // 种植农作物
 var interval_farming = setInterval(()=>{
-    if (!manual_stoping && !seed_adding && !finding_goblin && farm_approved && !seed_shopping_need) {
+    if (!manual_stoping && !seed_adding && !seed_selecting && !finding_goblin && farm_approved && !seed_shopping_need) {
         let search_results = search_crops()
         let crops_ready = search_results[0]
         let crops_preparing = search_results[1]
