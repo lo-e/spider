@@ -467,7 +467,7 @@ setInterval(function () {
                                 if (text == 'Buy') {
                                     // 点击Buy
                                     click_element(element)
-                                    let target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
+                                    var target_seeds_re = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
                                                            'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
                                                            'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII']
                                     // 兔子农场种植胡萝卜
@@ -479,6 +479,11 @@ setInterval(function () {
                                             break
                                         }
                                     }
+
+                                    // 备选种子
+                                    var preparing_seeds_re = ['JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg']
+
+                                    // 购买种子
                                     var interval_buying = setInterval(function () {
                                         $('div').each(function (index, element) {
                                             let class_name = $(element).attr('class')
@@ -487,12 +492,21 @@ setInterval(function () {
                                                 let shop_seeds_bar = element
                                                 let seeds = $(shop_seeds_bar).find('div div img')
                                                 var target_seeds = []
+                                                var preparing_seeds = []
                                                 $(seeds).each(function (seed_i, seed) {
                                                     let seed_src = $(seed).attr('src')
                                                     for (var i in target_seeds_re) {
                                                         let seed_re = RegExp(target_seeds_re[i])
                                                         if (seed_src.match(seed_re)) {
                                                             target_seeds.push(seed)
+                                                            break
+                                                        }
+                                                    }
+
+                                                    for (var i in preparing_seeds_re) {
+                                                        let seed_re = RegExp(preparing_seeds_re[i])
+                                                        if (seed_src.match(seed_re)) {
+                                                            preparing_seeds.push(seed)
                                                             break
                                                         }
                                                     }
@@ -503,22 +517,51 @@ setInterval(function () {
                                                 var processing = false
                                                 let interval_processing = setInterval(function () {
                                                     if (!processing) {
-                                                        if (target_seeds.length) {
-                                                            let seed = target_seeds[0]
-                                                            click_element(seed)
-                                                            processing = true
-                                                            let interval_perchase = setInterval(function () {
-                                                                let buy_10 = search_buy_10()
-                                                                if (buy_10) {
-                                                                    click_element(buy_10)
-                                                                    perchased = true
-                                                                }else {
-                                                                    clearInterval(interval_perchase)
-                                                                    processing = false
-                                                                }
-                                                            }, random_interval(0.5, 1))
+                                                        if (target_seeds.length || (!perchased && preparing_seeds.length)) {
+                                                            var seed = null
+                                                            var is_preparing = false
+                                                            if (target_seeds.length) {
+                                                                seed = target_seeds[0]
+                                                                target_seeds.shift(seed)
 
-                                                            target_seeds.shift(seed)
+                                                            }else if (preparing_seeds.length) {
+                                                                seed = preparing_seeds[0]
+                                                                is_preparing = true
+                                                            }
+                                                            if (seed) {
+                                                                click_element(seed)
+                                                                var preparing_buy_count = 0
+                                                                processing = true
+                                                                let interval_perchase = setInterval(function () {
+                                                                    var buy_button = null
+                                                                    if (is_preparing) {
+                                                                        buy_button = search_buy_1()
+                                                                    }else {
+                                                                        buy_button = search_buy_10()
+                                                                    }
+                                                                    if (buy_button) {
+                                                                        click_element(buy_button)
+                                                                        perchased = true
+                                                                    }else {
+                                                                        clearInterval(interval_perchase)
+                                                                        processing = false
+                                                                    }
+
+                                                                    if (is_preparing) {
+                                                                        preparing_buy_count ++
+
+                                                                        // 预备种子一次只购买一种
+                                                                        if (perchased) {
+                                                                            preparing_seeds = []
+                                                                        }
+                                                                        // 预备种子每次限制购买数量
+                                                                        if (preparing_buy_count >= 5) {
+                                                                            clearInterval(interval_perchase)
+                                                                            processing = false
+                                                                        }
+                                                                    }
+                                                                }, random_interval(0.5, 1))
+                                                            }
                                                         }else {
                                                             if (perchased) {
                                                                 // 有真实购买
@@ -1509,6 +1552,22 @@ function search_buy_10() {
         }
     })
     return buy_10
+}
+
+// 搜寻buy 1
+function search_buy_1() {
+    var buy_1 = null
+    $('button').each(function (index, element) {
+        let text = $(element).text()
+        if (text == 'Buy 1') {
+            let disabled = $(element).attr('disabled')
+            if (disabled == null) {
+                buy_1 = element
+            }
+            return false
+        }
+    })
+    return buy_1
 }
 
 // 搜寻sell all
