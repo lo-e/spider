@@ -383,3 +383,9 @@ function utc_zone_time(utc) {
             'minute':minute,
             'second':second}
 }
+
+// 数组相关
+var a = []
+a.push('a')                            // 从末尾添加元素
+a.unshift('a')                  // 从头部添加元素
+a.shift('a')                           // 从末尾删除元素
