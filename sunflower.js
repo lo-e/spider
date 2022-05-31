@@ -47,6 +47,7 @@ var farm_approved = false
 var last_action_until = 0
 var seed_shopping_need = false
 var is_shopping = false
+var is_click_shopping = false
 
 let farm_open = true
 let approved_farm_ids = ['']
@@ -116,7 +117,8 @@ document.addEventListener("click", function (ev){
 
     // 点击SFL向日葵
     let element_class = $(element).attr('class')
-    if (element_class == 'w-8 img-highlight') {
+    if (element_class == 'w-8 img-highlight' && !is_click_shopping) {
+        is_click_shopping = true
         // 手动停止
         manual_stoping = manual_stop(true)
         // 点击商店
@@ -139,6 +141,7 @@ document.addEventListener("click", function (ev){
                         click_element(shop)
                         last_action_until = 0
 
+                        is_click_shopping = false
                         clearInterval(interval_click_shop_draging)
                     }
                 }, random_interval(0.5, 1.5))
