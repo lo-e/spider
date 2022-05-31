@@ -131,16 +131,14 @@ document.addEventListener("click", function (ev){
                     let direction_x = direction[0]
                     let direction_y = direction[1]
                     if (direction_x || direction_y) {
-                        if (!manual_stoping) {
-                            drag_to_farming(direction_x, direction_y)
-                        }
+                        drag_to_farming(direction_x, direction_y)
                     } else {
                         // fake
                         console.log('****** 点击商店 ******')
                         // 点击shop
                         click_element(shop)
                         last_action_until = 0
-                        
+
                         clearInterval(interval_click_shop_draging)
                     }
                 }, random_interval(0.5, 1.5))
