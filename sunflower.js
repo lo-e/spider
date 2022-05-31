@@ -526,6 +526,7 @@ setInterval(function () {
 
                                                             }else if (preparing_seeds.length) {
                                                                 seed = preparing_seeds[0]
+                                                                preparing_seeds.shift(seed)
                                                                 is_preparing = true
                                                             }
                                                             if (seed) {
