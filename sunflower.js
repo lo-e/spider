@@ -482,6 +482,8 @@ setInterval(function () {
 
                                     // 备选种子
                                     var preparing_seeds_re = ['JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg']
+                                    // 卷心菜
+                                    // w7bAzv8MUOC1vpyRcWtAx39H1U8Mn5xkwMJnZ35iYNr84glMERywwFh8
 
                                     // 购买种子
                                     var interval_buying = setInterval(function () {
