@@ -12,8 +12,13 @@
 (function () {
     console.log('start')
 
-    fileHandle = await window.chooseFileSystemEntries();
-    console.log(fileHandle);
+    let a = null
+    let re = RegExp('abc')
+    if (a.match(re)) {
+        console.log('yes')
+    }else {
+        console.log('no')
+    }
 
     console.log('end')
 })()

@@ -342,7 +342,7 @@ let interval_id_checking = setInterval(function () {
     }
 }, random_interval(1, 2))
 
-// 检查是否有种子
+// 选择种子
 setInterval(function () {
     if (!farm_loading  && !manual_stoping && !finding_goblin && farm_approved && !seed_shopping_need) {
         seed_adding = seed_needed()
@@ -1423,23 +1423,34 @@ function search_bag_seeds() {
         if (seed_bar) {
             var seed_list = $(element).find('div .relative')
             if (seed_list.length) {
-                $(seed_list).each(function (seed_index, seed) {
-                    let seed_imgs = $(seed).find('div img')
-                    $(seed_imgs).each(function (image_index, image) {
-                        let img_src = $(image).attr('src')
-                        if (img_src) {
-                            // 排除花菜
-                            let re = /iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8/
-                            if (!img_src.match(re)) {
+                // 向日葵、土豆、南瓜、胡萝卜
+                var re_list = ['04GWwAAAAF0Uk5TAEDm2GYAAAAlSURBVAjXY2BxYWBgcFR2YGBwFjJhYHAyBDJZlIUcQEwgAZQGAEF7A8Cmxs72AAAAAElFTkSuQmCC',
+                               'xhBQAAAA9QTFRFAAAA6tSq13ZD5KZyvkovXunEXwAAAAF0Uk5TAEDm2GYAAAAeSURBVAjXY2BxYWBwNnZgcFYyAWIRBhZDEQYGFwcAIt8C3r0k1TEAAAAASUVORK5CYII',
+                               'pdcZAAAAAF0Uk5TAEDm2GYAAAAkSURBVAjXY2ANZWBgMHQJYGAwdXEFEiFAJlMoiK8aCCSYjRkAVkcE4tTOKagAAAAASUVORK5CYII',
+                               'JC8AAAAAF0Uk5TAEDm2GYAAAAmSURBVAjXY2A2ZmBgMFYxYGAQcnJmYBBRATIZnZwMQEwgwSjIAAA4HAMQhgsengAAAABJRU5ErkJggg']
+                // 花菜 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAP0lEQVQImWP8'
+
+                for (var i in re_list) {
+                    let re = RegExp(re_list[i])
+
+                    $(seed_list).each(function (seed_index, seed) {
+                        let seed_imgs = $(seed).find('div img')
+                        $(seed_imgs).each(function (image_index, image) {
+                            let img_src = $(image).attr('src')
+                            if (img_src && img_src.match(re)) {
                                 seed_target = image
                                 return false
                             }
+                        })
+                        if (seed_target) {
+                            return false
                         }
                     })
+
                     if (seed_target) {
-                        return false
+                        break
                     }
-                })
+                }
             }
             return false
         }
